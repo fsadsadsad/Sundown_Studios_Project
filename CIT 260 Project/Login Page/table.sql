@@ -5,7 +5,7 @@ CREATE TABLE user (
 );
 
 INSERT INTO user (username, password_hash)
-VALUES ('55555@student.csn.edu', '55555');
+VALUES ('55555@student.csn.edu', '$2b$12$ggZJJTTwPRMwJRVjjqTs5OddQxtlNPNenJ8g4UdNRdQa5VD.T2arS');
 
 INSERT INTO user (username, password_hash)
-VALUES ('44444@student.csn.edu', '44444');
+VALUES ('44444@student.csn.edu', '$2b$12$wwywXbV9glOwpPLEyGlHMe5MTR2jC4MCNdfJlexmmMCwT/MBzg1AW');

@@ -8,15 +8,47 @@
         <title>Test Page I guess</title>
     </head>
     <body>
+        <h1 type="text" id="title">exam registration </h1>
+        <!-- backend handled by Flask server; communication via fetch -->
         
-        <input
-        type="text"
-        id="user"
-        name="user">
-        <input
-        type="text"
-        id="password"
-        name="password">
-        <button id="loginbutton">login</button>
+        <div id="login-card">
+            <label for="user">Username: </label>
+            <input
+            type="text"
+            id="user"
+            name="user">
+            <label for="password">Password: </label>
+            <input
+            type="password"
+            id="password"
+            name="password">
+            <button type="button" id="loginbutton">login</button>
+            <a href="temp"> Forgot Username or Password? </a>
+        </div>
+        <script>
+          // send login info to Flask backend
+          document.getElementById('loginbutton').addEventListener('click', () => {
+            const username = document.getElementById('user').value;
+            const password = document.getElementById('password').value;
+            fetch('http://localhost:5000/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password })
+            })
+            .then(resp => resp.json())
+            .then(data => {
+              if (data.success) {
+                alert('Login successful!');
+                // TODO: redirect or process user data
+              } else {
+                alert('Error: ' + data.message);
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Network or server error');
+            });
+          });
+        </script>
     </body>
 </html>

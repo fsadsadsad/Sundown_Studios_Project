@@ -93,7 +93,34 @@ def login():
         connection.close()
         
         # Check if user exists and password matches
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+        valid = False
+        if user:
+            stored = user['password_hash']
+            try:
+                # bcrypt hashes start with $2 (eg $2b$)
+                if stored and stored.startswith("$2"):
+                    valid = bcrypt.checkpw(password.encode('utf-8'), stored.encode('utf-8'))
+                else:
+                    # legacy or incorrect value: compare plaintext
+                    valid = (password == stored)
+                    # optionally re-hash and update the database
+                    if valid:
+                        try:
+                            conn2 = get_db_connection()
+                            if conn2:
+                                cur2 = conn2.cursor()
+                                new_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                                cur2.execute("UPDATE user SET password_hash = %s WHERE id = %s", (new_hash, user['id']))
+                                conn2.commit()
+                                cur2.close()
+                                conn2.close()
+                        except Exception:
+                            pass
+            except Exception as e:
+                print(f"Error checking password hash: {e}")
+                valid = False
+
+        if valid:
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
