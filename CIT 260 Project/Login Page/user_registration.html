@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="stylesregistration.css" rel="stylesheet" type="text/css">
+  <title>CSN — User Registration</title>
+</head>
+<body>
+ 
+  <h1 id="title">Exam Registration — Create Account</h1>
+ 
+  <div id="login-card">
+ 
+    <label for="email">Email Address:</label>
+    <input
+      type="email"
+      id="email"
+      name="email"
+      placeholder="yourname@student.csn.edu" />
+ 
+    <label for="first_password">Password:</label>
+    <input
+      type="password"
+      id="first_password"
+      name="first_password"
+      placeholder="Create a password" />
+ 
+    <label for="second_password">Confirm Password:</label>
+    <input
+      type="password"
+      id="second_password"
+      name="second_password"
+      placeholder="Re-enter your password" />
+ 
+    <button type="button" id="loginbutton">Create Account</button>
+ 
+    <a href="tempurl">Already have an account? Log in here.</a>
+ 
+  </div>
+ 
+  <script>
+    // Backend handled by Flask server; communication via fetch
+    // document.getElementById('loginbutton').addEventListener('click', () => {
+    //   const email = document.getElementById('email').value;
+    //   const password = document.getElementById('first_password').value;
+    //   const confirm  = document.getElementById('second_password').value;
+    //   if (password !== confirm) { alert('Passwords do not match!'); return; }
+    //   fetch('http://localhost:5000/api/register', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ email, password })
+    //   })
+    //   .then(resp => resp.json())
+    //   .then(data => {
+    //     if (data.success) {
+    //       alert('Account created!');
+    //     } else {
+    //       alert('Error: ' + data.message);
+    //     }
+    //   })
+    //   .catch(err => { console.error(err); alert('Network or server error'); });
+    // });
+  </script>
+ 
+</body>
+</html>
+ 
