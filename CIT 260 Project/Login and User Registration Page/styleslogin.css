@@ -1,0 +1,305 @@
+/* ============================================
+   College of Southern Nevada — Exam Registration
+   Login Page Stylesheet
+   Color Theme: White & CSN Blue (#003DA5)
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+/* ---------- CSS Variables ---------- */
+:root {
+  --csn-blue: #003DA5;
+  --csn-blue-dark: #002a75;
+  --csn-blue-light: #1a5bc4;
+  --csn-accent: #4a90d9;
+  --white: #ffffff;
+  --off-white: #f4f7fc;
+  --light-gray: #dce6f5;
+  --text-dark: #0d1a33;
+  --text-muted: #5a6e8c;
+  --shadow: 0 8px 40px rgba(0, 61, 165, 0.15);
+  --shadow-hover: 0 12px 50px rgba(0, 61, 165, 0.25);
+  --radius: 12px;
+}
+
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background-color: var(--off-white);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 61, 165, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(74, 144, 217, 0.06) 0%, transparent 55%);
+  color: var(--text-dark);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Decorative Background Stripe ---------- */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(160deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
+  clip-path: polygon(0 0, 100% 0, 75% 100%, 0% 100%);
+  z-index: 0;
+}
+
+/* ---------- Page Title (h1) — Top Left ---------- */
+#title {
+  position: fixed;
+  top: 36px;
+  left: 44px;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
+  z-index: 10;
+  line-height: 1.2;
+}
+
+#title::after {
+  content: '';
+  display: block;
+  margin-top: 6px;
+  width: 40px;
+  height: 3px;
+  background: var(--csn-accent);
+  border-radius: 2px;
+}
+
+/* ---------- CSN Logo — Bottom Left ---------- */
+body::after {
+  content: 'CSN';
+  position: fixed;
+  bottom: 36px;
+  left: 44px;
+  font-family: 'Playfair Display', serif;
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.18em;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ---------- Login Card ---------- */
+body > *:not(#title) {
+  position: relative;
+  z-index: 5;
+}
+
+/* Wrap form elements in a card via the body layout */
+label, input, button, a {
+  display: block;
+}
+
+/* We position the form card using a flex container trick */
+body {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* The card itself — targets the cluster of form elements */
+label[for="user"],
+#user,
+label[for="password"],
+#password,
+#loginbutton,
+a[href="temp"] {
+  position: relative;
+  z-index: 5;
+}
+
+/* ---------- Card Container (pseudo-card via body padding) ---------- */
+
+/* Invisible card wrapper using a background on a grouped block */
+#user,
+label[for="user"] {
+  margin-top: 0;
+}
+
+/* Card visual: applied to the central region */
+body > label,
+body > input,
+body > button,
+body > a {
+  background: transparent;
+}
+
+/* Build the actual card using an overlay pseudo-element trick */
+/* Since we can't wrap in a div, we float everything into a visual box */
+
+/* ---------- Labels ---------- */
+label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+
+label[for="user"] {
+  margin-top: 0;
+}
+
+label[for="password"] {
+  margin-top: 22px;
+}
+
+/* ---------- Inputs ---------- */
+input[type="text"] {
+  width: 320px;
+  padding: 13px 18px;
+  border: 1.5px solid var(--light-gray);
+  border-radius: var(--radius);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-dark);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 2px 8px rgba(0, 61, 165, 0.05);
+}
+
+input[type="text"]:focus {
+  border-color: var(--csn-blue);
+  box-shadow: 0 0 0 4px rgba(0, 61, 165, 0.12);
+}
+
+input[type="text"]::placeholder {
+  color: #b0bdd4;
+}
+
+/* ---------- Login Button ---------- */
+#loginbutton {
+  width: 320px;
+  margin-top: 30px;
+  padding: 14px 0;
+  background: linear-gradient(135deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
+  color: var(--white);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 61, 165, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+#loginbutton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.12) 100%);
+  pointer-events: none;
+}
+
+#loginbutton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  background: linear-gradient(135deg, var(--csn-blue-dark) 0%, var(--csn-blue) 100%);
+}
+
+#loginbutton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 61, 165, 0.2);
+}
+
+/* ---------- Forgot Password Link ---------- */
+a[href="temp"] {
+  width: 320px;
+  margin-top: 18px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--csn-accent);
+  text-align: center;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease;
+}
+
+a[href="temp"]:hover {
+  color: var(--csn-blue);
+  text-decoration: underline;
+}
+
+/* ---------- Card Backdrop (full-page visual card) ---------- */
+
+/* 
+  Since the HTML has no wrapper div, we use the body's flex 
+  center + a fixed panel behind the form elements.
+  The card is simulated by a pseudo-element on html.
+*/
+#login-card {
+  position: relative;
+  z-index: 5;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 48px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 15%;   /* shifts card right of the blue panel */
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  body::before {
+    width: 100%;
+    height: 38%;
+    clip-path: polygon(0 0, 100% 0, 100% 75%, 0% 100%);
+  }
+
+  #title {
+    top: 28px;
+    left: 24px;
+    font-size: 1.25rem;
+  }
+
+  body::after {
+    bottom: 20px;
+    left: 24px;
+    font-size: 1.8rem;
+  }
+
+  html::after {
+    width: 90vw;
+    transform: translate(-50%, -50%);
+    left: 50%;
+  }
+
+  input[type="text"],
+  #loginbutton,
+  a[href="temp"] {
+    width: 260px;
+  }
+}

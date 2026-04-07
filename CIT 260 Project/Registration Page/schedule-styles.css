@@ -1,0 +1,211 @@
+
+/* ============================================
+   College of Southern Nevada — Exam Scheduling
+   Stylesheet: schedule-styles.css
+   Theme: White & CSN Blue — Clean / Standard
+   ============================================ */
+ 
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap');
+ 
+/* ---------- CSS Variables ---------- */
+:root {
+  --csn-blue: #003DA5;
+  --csn-blue-dark: #002a75;
+  --csn-blue-light: #1a5bc4;
+  --csn-accent: #4a90d9;
+  --white: #ffffff;
+  --off-white: #f4f7fc;
+  --light-gray: #dce6f5;
+  --border-color: #c8d8ef;
+  --text-dark: #0d1a33;
+  --text-muted: #5a6e8c;
+  --shadow: 0 4px 24px rgba(0, 61, 165, 0.10);
+  --radius: 10px;
+}
+ 
+/* ---------- Reset & Base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+html, body {
+  height: 100%;
+  width: 100%;
+}
+ 
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background-color: var(--off-white);
+  color: var(--text-dark);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+ 
+/* ---------- Header Bar (h1 top-left in blue block) ---------- */
+#page-header {
+  width: 100%;
+  background: linear-gradient(90deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
+  padding: 22px 48px;
+  box-shadow: 0 2px 12px rgba(0, 61, 165, 0.18);
+}
+ 
+#title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+ 
+/* ---------- Main Content Area ---------- */
+main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+ 
+/* ---------- Schedule Card ---------- */
+#schedule-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 44px 48px;
+  width: 100%;
+  max-width: 580px;
+  border-top: 4px solid var(--csn-blue);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+ 
+/* ---------- Form Layout ---------- */
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+ 
+.form-row .form-group {
+  flex: 1;
+}
+ 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+ 
+/* ---------- Labels ---------- */
+label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+ 
+/* ---------- Inputs ---------- */
+input[type="text"],
+input[type="time"],
+input[type="date"] {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.97rem;
+  font-weight: 400;
+  color: var(--text-dark);
+  background: var(--off-white);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+ 
+input[type="text"]:focus,
+input[type="time"]:focus,
+input[type="date"]:focus {
+  border-color: var(--csn-blue);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.10);
+}
+ 
+input::placeholder {
+  color: #b0bdd4;
+  font-style: italic;
+}
+ 
+/* ---------- Submit Button ---------- */
+#submitbutton {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 0;
+  background: linear-gradient(90deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
+  color: var(--white);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.97rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: 0 3px 14px rgba(0, 61, 165, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+ 
+#submitbutton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0, 61, 165, 0.30);
+  background: linear-gradient(90deg, var(--csn-blue-dark) 0%, var(--csn-blue) 100%);
+}
+ 
+#submitbutton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 61, 165, 0.18);
+}
+ 
+/* ---------- Footer ---------- */
+#page-footer {
+  width: 100%;
+  background: var(--csn-blue);
+  padding: 14px 48px;
+  text-align: left;
+}
+ 
+#page-footer span {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+ 
+/* ---------- Responsive ---------- */
+@media (max-width: 560px) {
+  #page-header {
+    padding: 18px 24px;
+  }
+ 
+  #title {
+    font-size: 1.25rem;
+  }
+ 
+  #schedule-card {
+    padding: 30px 22px;
+  }
+ 
+  .form-row {
+    flex-direction: column;
+    gap: 22px;
+  }
+ 
+  #page-footer {
+    padding: 14px 24px;
+  }
+}

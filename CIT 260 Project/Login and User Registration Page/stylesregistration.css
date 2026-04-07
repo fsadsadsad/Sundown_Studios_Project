@@ -1,12 +1,12 @@
 /* ============================================
-   College of Southern Nevada — Exam Registration
-   Login Page Stylesheet
-   Color Theme: White & CSN Blue (#003DA5)
+   College of Southern Nevada — User Registration
+   Stylesheet: stylesregister.css
+   Matches login page style (styles.css)
    ============================================ */
-
+ 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap');
-
-/* ---------- CSS Variables ---------- */
+ 
+/* ---------- CSS Variables (identical to login) ---------- */
 :root {
   --csn-blue: #003DA5;
   --csn-blue-dark: #002a75;
@@ -21,19 +21,19 @@
   --shadow-hover: 0 12px 50px rgba(0, 61, 165, 0.25);
   --radius: 12px;
 }
-
+ 
 /* ---------- Reset & Base ---------- */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-
+ 
 html, body {
   height: 100%;
   width: 100%;
 }
-
+ 
 body {
   font-family: 'Source Sans 3', sans-serif;
   background-color: var(--off-white);
@@ -48,8 +48,8 @@ body {
   position: relative;
   overflow: hidden;
 }
-
-/* ---------- Decorative Background Stripe ---------- */
+ 
+/* ---------- Decorative Background Stripe (same as login) ---------- */
 body::before {
   content: '';
   position: fixed;
@@ -61,8 +61,8 @@ body::before {
   clip-path: polygon(0 0, 100% 0, 75% 100%, 0% 100%);
   z-index: 0;
 }
-
-/* ---------- Page Title (h1) — Top Left ---------- */
+ 
+/* ---------- Page Title (h1) — Top Left, same as login ---------- */
 #title {
   position: fixed;
   top: 36px;
@@ -76,7 +76,7 @@ body::before {
   z-index: 10;
   line-height: 1.2;
 }
-
+ 
 #title::after {
   content: '';
   display: block;
@@ -86,8 +86,8 @@ body::before {
   background: var(--csn-accent);
   border-radius: 2px;
 }
-
-/* ---------- CSN Logo — Bottom Left ---------- */
+ 
+/* ---------- CSN — Bottom Left (same as login) ---------- */
 body::after {
   content: 'CSN';
   position: fixed;
@@ -101,56 +101,41 @@ body::after {
   z-index: 10;
   pointer-events: none;
 }
-
-/* ---------- Login Card ---------- */
-body > *:not(#title) {
+ 
+/* ---------- Registration Card ---------- */
+/* Taller than login card to accommodate extra fields */
+#login-card {
   position: relative;
   z-index: 5;
-}
-
-/* Wrap form elements in a card via the body layout */
-label, input, button, a {
-  display: block;
-}
-
-/* We position the form card using a flex container trick */
-body {
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 48px 50px;
+  display: flex;
   flex-direction: column;
-  gap: 0;
+  align-items: flex-start;
+  margin-left: 15%;
+  width: 420px;
+ 
+  /* Subtle top accent to differentiate from login */
+  border-top: 4px solid var(--csn-blue);
 }
-
-/* The card itself — targets the cluster of form elements */
-label[for="user"],
-#user,
-label[for="password"],
-#password,
-#loginbutton,
-a[href="temp"] {
-  position: relative;
-  z-index: 5;
+ 
+/* ---------- Section heading inside card ---------- */
+#login-card::before {
+  content: 'New Account';
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--csn-blue);
+  margin-bottom: 28px;
+  letter-spacing: 0.02em;
 }
-
-/* ---------- Card Container (pseudo-card via body padding) ---------- */
-
-/* Invisible card wrapper using a background on a grouped block */
-#user,
-label[for="user"] {
-  margin-top: 0;
-}
-
-/* Card visual: applied to the central region */
-body > label,
-body > input,
-body > button,
-body > a {
-  background: transparent;
-}
-
-/* Build the actual card using an overlay pseudo-element trick */
-/* Since we can't wrap in a div, we float everything into a visual box */
-
+ 
 /* ---------- Labels ---------- */
 label {
+  display: block;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -159,17 +144,20 @@ label {
   margin-bottom: 6px;
   margin-top: 0;
 }
-
-label[for="user"] {
+ 
+label[for="first_password"],
+label[for="second_password"] {
+  margin-top: 20px;
+}
+ 
+label[for="email"] {
   margin-top: 0;
 }
-
-label[for="password"] {
-  margin-top: 22px;
-}
-
+ 
 /* ---------- Inputs ---------- */
-input[type="text"] {
+input[type="email"],
+input[type="password"] {
+  display: block;
   width: 320px;
   padding: 13px 18px;
   border: 1.5px solid var(--light-gray);
@@ -183,20 +171,27 @@ input[type="text"] {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 2px 8px rgba(0, 61, 165, 0.05);
 }
-
-input[type="text"]:focus {
+ 
+input[type="email"]:focus,
+input[type="password"]:focus {
   border-color: var(--csn-blue);
   box-shadow: 0 0 0 4px rgba(0, 61, 165, 0.12);
 }
-
-input[type="text"]::placeholder {
+ 
+input::placeholder {
   color: #b0bdd4;
+  font-style: italic;
 }
-
-/* ---------- Login Button ---------- */
+ 
+/* ---------- Divider before button ---------- */
 #loginbutton {
+  margin-top: 32px;
+}
+ 
+/* ---------- Create Account Button (same style as login button) ---------- */
+#loginbutton {
+  display: block;
   width: 320px;
-  margin-top: 30px;
   padding: 14px 0;
   background: linear-gradient(135deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
   color: var(--white);
@@ -213,7 +208,7 @@ input[type="text"]::placeholder {
   position: relative;
   overflow: hidden;
 }
-
+ 
 #loginbutton::after {
   content: '';
   position: absolute;
@@ -221,20 +216,21 @@ input[type="text"]::placeholder {
   background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.12) 100%);
   pointer-events: none;
 }
-
+ 
 #loginbutton:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
   background: linear-gradient(135deg, var(--csn-blue-dark) 0%, var(--csn-blue) 100%);
 }
-
+ 
 #loginbutton:active {
   transform: translateY(0);
   box-shadow: 0 2px 10px rgba(0, 61, 165, 0.2);
 }
-
-/* ---------- Forgot Password Link ---------- */
-a[href="temp"] {
+ 
+/* ---------- Back to Login Link ---------- */
+a[href="tempurl"] {
+  display: block;
   width: 320px;
   margin-top: 18px;
   font-size: 0.875rem;
@@ -245,32 +241,12 @@ a[href="temp"] {
   letter-spacing: 0.01em;
   transition: color 0.2s ease;
 }
-
-a[href="temp"]:hover {
+ 
+a[href="tempurl"]:hover {
   color: var(--csn-blue);
   text-decoration: underline;
 }
-
-/* ---------- Card Backdrop (full-page visual card) ---------- */
-
-/* 
-  Since the HTML has no wrapper div, we use the body's flex 
-  center + a fixed panel behind the form elements.
-  The card is simulated by a pseudo-element on html.
-*/
-#login-card {
-  position: relative;
-  z-index: 5;
-  background: var(--white);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  padding: 48px 50px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-left: 15%;   /* shifts card right of the blue panel */
-}
-
+ 
 /* ---------- Responsive ---------- */
 @media (max-width: 600px) {
   body::before {
@@ -278,28 +254,29 @@ a[href="temp"]:hover {
     height: 38%;
     clip-path: polygon(0 0, 100% 0, 100% 75%, 0% 100%);
   }
-
+ 
   #title {
     top: 28px;
     left: 24px;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
-
+ 
   body::after {
     bottom: 20px;
     left: 24px;
     font-size: 1.8rem;
   }
-
-  html::after {
+ 
+  #login-card {
+    margin-left: 0;
     width: 90vw;
-    transform: translate(-50%, -50%);
-    left: 50%;
+    padding: 36px 24px;
   }
-
-  input[type="text"],
+ 
+  input[type="email"],
+  input[type="password"],
   #loginbutton,
-  a[href="temp"] {
-    width: 260px;
+  a[href="tempurl"] {
+    width: 100%;
   }
 }

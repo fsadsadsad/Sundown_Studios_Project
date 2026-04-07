@@ -1,44 +1,76 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href="styles.css" rel="stylesheet" type="text/css">
-        <title>Test Page I guess 2</title>
-    </head>
-    <body>
-        <div id="Information"> 
-            <label for="Time">Time: </label>
-            <input
-            type="text"
-            id="Time"
-            name="Time">
-            <label for="date">date: </label>
-            <input
-            type="text"
-            id="date"
-            name="date">
-            <label for="Location">Location: </label>
-            <input
-            type="text"
-            id="location"
-            name="location">
-            <label for="Room">Room Number: </label>
-            <input
-            type="text"
-            id="Room"
-            name="Room">
-            <label for="Building">Building: </label>
-            <input
-            type="text"
-            id="Building"
-            name="Building">
-            <button type="button" id="loginbutton">login</button>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="schedule-styles.css" rel="stylesheet" type="text/css">
+  <title>CSN — Schedule Your Exam</title>
+</head>
+<body>
+ 
+  <!-- Top blue header bar with h1 -->
+  <header id="page-header">
+    <h1 id="title">Please Schedule Your Exam</h1>
+  </header>
+ 
+  <main>
+    <div id="schedule-card">
+ 
+      <div class="form-row">
+        <div class="form-group">
+          <label for="time">Time:</label>
+          <input type="time" id="time" name="time" />
         </div>
-        <script>
+ 
+        <div class="form-group">
+          <label for="date">Date:</label>
+          <input type="date" id="date" name="date" />
+        </div>
+      </div>
+ 
+      <div class="form-group">
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" placeholder="e.g. Henderson Campus" />
+      </div>
+ 
+      <div class="form-row">
+        <div class="form-group">
+          <label for="building">Building:</label>
+          <input type="text" id="building" name="building" placeholder="e.g. Building A" />
+        </div>
+ 
+        <div class="form-group">
+          <label for="room">Room Number:</label>
+          <input type="text" id="room" name="room" placeholder="e.g. 101" />
+        </div>
+      </div>
 
-        </script>
-    </body>
+    <div class="form-row">
+      <div class="form-group">
+          <label for="subject">Subject:</label>
+          <input type="text" id="subject" name="subject" placeholder="e.g. ENG" />
+        </div>
+      </div>
 
+      <div class="form-group">
+          <label for="procter">Procter:</label>
+          <input type="text" id="procter" name="procter" placeholder="e.g. Mr. William Whiskey" />
+      </div>
+      <div id="form-group">
+        <button type="button" id="submitbutton">Schedule Exam</button>
+      </div>
+      </div>
+      </div>
+
+    </div>
+  </main>
+ 
+  <footer id="page-footer">
+    <span>College of Southern Nevada</span>
+  </footer>
+ 
+  <script></script>
+</body>
 </html>
+ 
