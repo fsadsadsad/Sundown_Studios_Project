@@ -142,18 +142,34 @@ def health():
 @app.route('/api/register', methods=['POST'])
 def register():
     """
-    Register a new user
-    Expects JSON: {"username": "user", "email": "email@example.com", "password": "pass"}
+    Register a new user by creating a username and password.
+    
+    This function handles user registration requests. It validates the input,
+    hashes the password for secure storage, and stores the user information
+    in the database. Duplicate usernames are not allowed due to the UNIQUE
+    constraint on the username field.
+    
+    Expects JSON payload:
+    {
+        "username": "string",  // Required, non-empty after stripping whitespace
+        "password": "string"   // Required, non-empty
+    }
+    
+    Returns:
+    - 201: {"success": true, "message": "Registration successful"}
+    - 400: {"success": false, "message": "Username and password are required"}
+    - 409: {"success": false, "message": "Username already exists"}
+    - 500: {"success": false, "message": "Database connection failed"} or
+           {"success": false, "message": "An error occurred during registration"}
     """
     try:
         data = request.get_json()
         username = data.get('username', '').strip()
-        email = data.get('email', '').strip()
         password = data.get('password', '')
         
         # Validate input
-        if not username or not email or not password:
-            return jsonify({'success': False, 'message': 'All fields are required'}), 400
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password are required'}), 400
         
         # Hash password
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -167,8 +183,8 @@ def register():
         
         try:
             # Insert new user
-            query = "INSERT INTO user (username, email, password_hash) VALUES (%s, %s, %s)"
-            cursor.execute(query, (username, email, password_hash))
+            query = "INSERT INTO user (username, password_hash) VALUES (%s, %s)"
+            cursor.execute(query, (username, password_hash))
             connection.commit()
             
             cursor.close()
@@ -176,13 +192,13 @@ def register():
             
             return jsonify({
                 'success': True,
-                'message': 'User registered successfully'
+                'message': 'Registration successful'
             }), 201
         
         except mysql.connector.errors.IntegrityError:
             cursor.close()
             connection.close()
-            return jsonify({'success': False, 'message': 'Username or email already exists'}), 409
+            return jsonify({'success': False, 'message': 'Username already exists'}), 409
     
     except Exception as e:
         print(f"Error during registration: {e}")
