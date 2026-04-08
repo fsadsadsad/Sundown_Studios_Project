@@ -13,12 +13,12 @@
  
   <div id="login-card">
  
-    <label for="email">Email Address:</label>
+    <label for="username">Username:</label>
     <input
-      type="email"
-      id="email"
-      name="email"
-      placeholder="yourname@student.csn.edu" />
+      type="text"
+      id="username"
+      name="username"
+      placeholder="NSHEID@student.csn.edu" />
  
     <label for="first_password">Password:</label>
     <input
@@ -34,34 +34,48 @@
       name="second_password"
       placeholder="Re-enter your password" />
  
-    <button type="button" id="loginbutton">Create Account</button>
+    <button type="button" id="registerbutton">Create Account</button>
  
-    <a href="tempurl">Already have an account? Log in here.</a>
+    <a href="login.html">Already have an account? Log in here.</a>
  
   </div>
  
   <script>
     // Backend handled by Flask server; communication via fetch
-    // document.getElementById('loginbutton').addEventListener('click', () => {
-    //   const email = document.getElementById('email').value;
-    //   const password = document.getElementById('first_password').value;
-    //   const confirm  = document.getElementById('second_password').value;
-    //   if (password !== confirm) { alert('Passwords do not match!'); return; }
-    //   fetch('http://localhost:5000/api/register', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password })
-    //   })
-    //   .then(resp => resp.json())
-    //   .then(data => {
-    //     if (data.success) {
-    //       alert('Account created!');
-    //     } else {
-    //       alert('Error: ' + data.message);
-    //     }
-    //   })
-    //   .catch(err => { console.error(err); alert('Network or server error'); });
-    // });
+    document.getElementById('registerbutton').addEventListener('click', () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('first_password').value;
+      const confirm = document.getElementById('second_password').value;
+
+      if (!username || !password) {
+        alert('Username and password are required.');
+        return;
+      }
+
+      if (password !== confirm) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
+      .then(({ status, body }) => {
+        if (body.success) {
+          alert('Account created successfully! Please log in.');
+          window.location.href = 'login.html';
+        } else {
+          alert('Error: ' + body.message);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Network or server error');
+      });
+    });
   </script>
  
 </body>

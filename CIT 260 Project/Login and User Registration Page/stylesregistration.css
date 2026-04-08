@@ -156,6 +156,7 @@ label[for="email"] {
  
 /* ---------- Inputs ---------- */
 input[type="email"],
+input[type="text"],
 input[type="password"] {
   display: block;
   width: 320px;
@@ -173,6 +174,7 @@ input[type="password"] {
 }
  
 input[type="email"]:focus,
+input[type="text"]:focus,
 input[type="password"]:focus {
   border-color: var(--csn-blue);
   box-shadow: 0 0 0 4px rgba(0, 61, 165, 0.12);
@@ -184,12 +186,12 @@ input::placeholder {
 }
  
 /* ---------- Divider before button ---------- */
-#loginbutton {
+#registerbutton {
   margin-top: 32px;
 }
  
 /* ---------- Create Account Button (same style as login button) ---------- */
-#loginbutton {
+#registerbutton {
   display: block;
   width: 320px;
   padding: 14px 0;
@@ -209,7 +211,7 @@ input::placeholder {
   overflow: hidden;
 }
  
-#loginbutton::after {
+#registerbutton::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -217,19 +219,19 @@ input::placeholder {
   pointer-events: none;
 }
  
-#loginbutton:hover {
+#registerbutton:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
   background: linear-gradient(135deg, var(--csn-blue-dark) 0%, var(--csn-blue) 100%);
 }
  
-#loginbutton:active {
+#registerbutton:active {
   transform: translateY(0);
   box-shadow: 0 2px 10px rgba(0, 61, 165, 0.2);
 }
  
 /* ---------- Back to Login Link ---------- */
-a[href="tempurl"] {
+a[href="login.html"] {
   display: block;
   width: 320px;
   margin-top: 18px;
@@ -242,7 +244,7 @@ a[href="tempurl"] {
   transition: color 0.2s ease;
 }
  
-a[href="tempurl"]:hover {
+a[href="login.html"]:hover {
   color: var(--csn-blue);
   text-decoration: underline;
 }

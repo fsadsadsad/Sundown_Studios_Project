@@ -23,6 +23,7 @@
             id="password"
             name="password">
             <button type="button" id="loginbutton">login</button>
+            <button type="button" id="registerbutton">Register</button>
             <a href="temp"> Forgot Username or Password? </a>
         </div>
         <script>
@@ -48,6 +49,10 @@
               console.error(err);
               alert('Network or server error');
             });
+          });
+
+          document.getElementById('registerbutton').addEventListener('click', () => {
+            window.location.href = 'user_registration.html';
           });
         </script>
     </body>
