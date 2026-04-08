@@ -9,12 +9,14 @@
 </head>
 <body>
  
-  <!-- Top blue header bar with h1 -->
+  <!-- Top blue header bar -->
   <header id="page-header">
     <h1 id="title">Please Schedule Your Exam</h1>
   </header>
  
   <main>
+ 
+    <!-- LEFT: Scheduling Form -->
     <div id="schedule-card">
  
       <div class="form-row">
@@ -22,7 +24,6 @@
           <label for="time">Time:</label>
           <input type="time" id="time" name="time" />
         </div>
- 
         <div class="form-group">
           <label for="date">Date:</label>
           <input type="date" id="date" name="date" />
@@ -39,38 +40,80 @@
           <label for="building">Building:</label>
           <input type="text" id="building" name="building" placeholder="e.g. Building A" />
         </div>
- 
         <div class="form-group">
           <label for="room">Room Number:</label>
           <input type="text" id="room" name="room" placeholder="e.g. 101" />
         </div>
       </div>
-
-    <div class="form-row">
-      <div class="form-group">
+ 
+      <div class="form-row">
+        <div class="form-group">
           <label for="subject">Subject:</label>
-          <input type="text" id="subject" name="subject" placeholder="e.g. ENG" />
+          <input type="text" id="subject" name="subject" placeholder="e.g. ENG 101" />
+        </div>
+        <div class="form-group">
+          <label for="proctor">Proctor:</label>
+          <input type="text" id="proctor" name="proctor" placeholder="e.g. Mr. Smith" />
         </div>
       </div>
-
+ 
       <div class="form-group">
-          <label for="procter">Procter:</label>
-          <input type="text" id="procter" name="procter" placeholder="e.g. Mr. William Whiskey" />
-      </div>
-      <div id="form-group">
         <button type="button" id="submitbutton">Schedule Exam</button>
       </div>
-      </div>
-      </div>
-
+ 
     </div>
+    <!-- END schedule-card -->
+ 
+    <!-- RIGHT: Scheduled Exams Viewer -->
+    <div id="scheduled-exams">
+ 
+      <h2 id="exams-heading">Your Scheduled Exams</h2>
+ 
+      <!-- 3 exam slots — JS will populate these later -->
+      <div class="exam-slot" id="exam-slot-1">
+        <div class="exam-info">
+          <span class="exam-label">Exam 1</span>
+          <span class="exam-detail">No exam scheduled</span>
+        </div>
+        <button type="button" class="cancel-btn" disabled>Cancel</button>
+      </div>
+ 
+      <div class="exam-slot" id="exam-slot-2">
+        <div class="exam-info">
+          <span class="exam-label">Exam 2</span>
+          <span class="exam-detail">No exam scheduled</span>
+        </div>
+        <button type="button" class="cancel-btn" disabled>Cancel</button>
+      </div>
+ 
+      <div class="exam-slot" id="exam-slot-3">
+        <div class="exam-info">
+          <span class="exam-label">Exam 3</span>
+          <span class="exam-detail">No exam scheduled</span>
+        </div>
+        <button type="button" class="cancel-btn" disabled>Cancel</button>
+      </div>
+ 
+      <!-- Logout button pinned to bottom of panel -->
+      <div id="logout-row">
+        <button type="button" id="logoutbutton">Log Out</button>
+      </div>
+ 
+    </div>
+    <!-- END scheduled-exams -->
+ 
   </main>
  
   <footer id="page-footer">
     <span>College of Southern Nevada</span>
   </footer>
  
-  <script></script>
+  <script>
+    // TODO: wire up to Flask backend
+    // submitbutton  → POST   /api/schedule  → refresh exam slots
+    // cancel-btn    → DELETE /api/schedule/:id → refresh exam slots
+    // logoutbutton  → POST   /api/logout    → redirect to login page
+  </script>
+ 
 </body>
 </html>
- 
