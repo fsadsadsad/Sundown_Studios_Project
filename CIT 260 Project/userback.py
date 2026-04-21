@@ -1,11 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
 import bcrypt
+import os
+import sys
+
+# Add Registration Page directory to path so we can import regiback
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Registration Page'))
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
+app.secret_key = 'your_secret_key_here'  # Change this to a secure secret key
 
 # Database configuration
 db_config = {
@@ -121,11 +127,13 @@ def login():
                 valid = False
 
         if valid:
+            session['username'] = username
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
                 'user_id': user['id'],
-                'username': user['username']
+                'username': user['username'],
+                'redirect': '../Registration page/regipage.html'
             }), 200
         else:
             return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
@@ -138,6 +146,14 @@ def login():
 def health():
     """Health check endpoint"""
     return jsonify({'status': 'Server is running'}), 200
+
+@app.route('/api/current_user', methods=['GET'])
+def current_user():
+    """Get the current logged-in user"""
+    if 'username' in session:
+        return jsonify({'username': session['username']}), 200
+    else:
+        return jsonify({'username': None}), 401
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -203,6 +219,19 @@ def register():
     except Exception as e:
         print(f"Error during registration: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during registration'}), 500
+
+@app.route('/Registration page/regipage.html')
+def regipage():
+    """Serve the regipage.html"""
+    return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'Registration Page'), 'regipage.html')
+
+# Import and register regiback routes
+try:
+    import regiback
+    # Register regiback's logout route with this app
+    app.add_url_rule('/api/logout', 'logout_from_regiback', regiback.logout, methods=['POST'])
+except ImportError as e:
+    print(f"Warning: Could not import regiback: {e}")
 
 if __name__ == '__main__':
     if init_database():
