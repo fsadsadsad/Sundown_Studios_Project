@@ -109,10 +109,34 @@
   </footer>
  
   <script>
+    // Handle logout button
+    document.getElementById('logoutbutton').addEventListener('click', () => {
+      fetch('http://localhost:5000/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        if (data.success) {
+          // Clear local credentials
+          localStorage.removeItem('username');
+          localStorage.removeItem('user_id');
+          // Redirect to login page
+          window.location.href = 'login.html';
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Network or server error');
+      });
+    });
+    
     // TODO: wire up to Flask backend
     // submitbutton  → POST   /api/schedule  → refresh exam slots
     // cancel-btn    → DELETE /api/schedule/:id → refresh exam slots
-    // logoutbutton  → POST   /api/logout    → redirect to login page
   </script>
  
 </body>

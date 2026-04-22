@@ -6,8 +6,8 @@ import bcrypt
 import os
 import sys
 
-# Add Registration Page directory to path so we can import regiback
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'Registration Page'))
+# Import regiback from current directory
+sys.path.insert(0, os.path.dirname(__file__))
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -133,7 +133,7 @@ def login():
                 'message': 'Login successful',
                 'user_id': user['id'],
                 'username': user['username'],
-                'redirect': '../Registration page/regipage.html'
+                'redirect': 'regipage.html'
             }), 200
         else:
             return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
@@ -220,10 +220,20 @@ def register():
         print(f"Error during registration: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during registration'}), 500
 
-@app.route('/Registration page/regipage.html')
+@app.route('/regipage.html')
 def regipage():
     """Serve the regipage.html"""
-    return send_from_directory(os.path.join(os.path.dirname(__file__), '..', 'Registration Page'), 'regipage.html')
+    return send_from_directory(os.path.dirname(__file__), 'regipage.html')
+
+@app.route('/login.html')
+def login_page():
+    """Serve the login.html"""
+    return send_from_directory(os.path.dirname(__file__), 'login.html')
+
+@app.route('/user_registration.html')
+def user_registration_page():
+    """Serve the user_registration.html"""
+    return send_from_directory(os.path.dirname(__file__), 'user_registration.html')
 
 # Import and register regiback routes
 try:
