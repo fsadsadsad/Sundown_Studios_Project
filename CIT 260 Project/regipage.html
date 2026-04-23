@@ -32,28 +32,41 @@
  
       <div class="form-group">
         <label for="location">Location:</label>
-        <input type="text" id="location" name="location" placeholder="e.g. Henderson Campus" />
+        <!--input type="text" id="location" name="location" placeholder="e.g. Henderson Campus" readonly/-->
+        <select id="location" name="location" placeholder="e.g. Henderson Campus">
+            <option value="Henderson">Henderson Campus</option>
+            <option value="Charleston">Charleston Campus</option>
+            <option value="North">North Las Vegas Campus</option>
+        </select>
       </div>
  
       <div class="form-row">
         <div class="form-group">
           <label for="building">Building:</label>
-          <input type="text" id="building" name="building" placeholder="e.g. Building A" />
+          <input type="text" id="building" name="building" placeholder="e.g. Building A" readonly/>
         </div>
         <div class="form-group">
           <label for="room">Room Number:</label>
-          <input type="text" id="room" name="room" placeholder="e.g. 101" />
+          <input type="text" id="room" name="room" placeholder="e.g. 101" readonly/>
         </div>
       </div>
  
       <div class="form-row">
         <div class="form-group">
           <label for="subject">Subject:</label>
-          <input type="text" id="subject" name="subject" placeholder="e.g. ENG 101" />
+          <!--input type="text" id="subject" name="subject" placeholder="e.g. ENG" /-->
+        <div class="dropdown">
+          <select id="subject" name="subject" placeholder="e.g. ENG">
+            <option value="ENG">ENGLISH</option>
+            <option value="ENG">MATH</option>
+            <option value="ENG">BIOLOGY</option>
+            <option value="ENG">HISTORY</option>
+          </select>
+        </div>
         </div>
         <div class="form-group">
           <label for="proctor">Proctor:</label>
-          <input type="text" id="proctor" name="proctor" placeholder="e.g. Mr. Smith" />
+          <input type="text" id="proctor" name="proctor" placeholder="e.g. Mr. Smith" readonly/>
         </div>
       </div>
  
