@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSN Exam Registration Confirmation</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+:root {
+  --csn-blue:#003DA5;
+  --csn-blue-light:#1a5bc4;
+  --off-white:#f4f7fc;
+  --border:#c8d8ef;
+}
+
+body{
+  font-family:'Source Sans 3',sans-serif;
+  margin:0;
+  background:var(--off-white);
+}
+
+header{
+  background:linear-gradient(90deg,var(--csn-blue),var(--csn-blue-light));
+  color:white;
+  padding:20px 40px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+header img{
+  height:60px;
+  background:white;
+  padding:5px;
+  border-radius:8px;
+}
+
+main{
+  display:flex;
+  justify-content:center;
+  padding:50px;
+}
+
+.card{
+  background:white;
+  padding:40px;
+  border-radius:12px;
+  width:700px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.1);
+  border-top:5px solid var(--csn-blue);
+}
+
+.success{
+  width:70px;
+  height:70px;
+  margin:auto;
+  background:#007a3d;
+  color:white;
+  border-radius:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:40px;
+}
+
+h1{
+  text-align:center;
+  font-family:'Playfair Display',serif;
+  color:var(--csn-blue);
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.notice{
+  margin-top:20px;
+  padding:15px;
+  background:#fff8d6;
+  border-left:5px solid #ffcc00;
+}
+
+.buttons{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.btn{
+  flex:1;
+  padding:12px;
+  background:var(--csn-blue);
+  color:white;
+  text-decoration:none;
+  text-align:center;
+  border-radius:8px;
+}
+
+footer{
+  background:var(--csn-blue);
+  color:white;
+  text-align:center;
+  padding:15px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div><img src="csn-logo.png"></div>
+<div>Exam Registration Confirmation</div>
+</header>
+
+<main>
+<div class="card">
+<div class="success">✓</div>
+
+<h1>Your Exam Has Been Booked</h1>
+
+<div class="row"><span>Name</span><span id="studentName"></span></div>
+<div class="row"><span>Email</span><span id="email"></span></div>
+<div class="row"><span>Exam</span><span id="exam"></span></div>
+<div class="row"><span>Date</span><span id="examDate"></span></div>
+<div class="row"><span>Time</span><span id="examTime"></span></div>
+<div class="row"><span>Location</span><span id="location"></span></div>
+
+<div class="notice">
+Please arrive 15 minutes early with a valid ID.
+</div>
+
+<div class="buttons">
+<a href="regipage.html" class="btn">Back</a>
+<a href="#" onclick="window.print()" class="btn">Print</a>
+</div>
+
+</div>
+</main>
+
+<footer>
+College of Southern Nevada | Exam Registration System
+</footer>
+
+<script>
+const p=new URLSearchParams(window.location.search);
+document.getElementById("studentName").textContent=p.get("studentName");
+document.getElementById("email").textContent=p.get("email");
+document.getElementById("exam").textContent=p.get("exam");
+document.getElementById("examDate").textContent=p.get("examDate");
+document.getElementById("examTime").textContent=p.get("examTime");
+document.getElementById("location").textContent=p.get("location");
+</script>
+
+</body>
+</html>
