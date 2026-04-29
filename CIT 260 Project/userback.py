@@ -238,8 +238,10 @@ def user_registration_page():
 # Import and register regiback routes
 try:
     import regiback
-    # Register regiback's logout route with this app
-    app.add_url_rule('/api/logout', 'logout_from_regiback', regiback.logout, methods=['POST'])
+    app.add_url_rule('/api/logout',  'logout',       regiback.logout,       methods=['POST'])
+    app.add_url_rule('/api/schedule', 'schedule_exam', regiback.schedule_exam, methods=['POST'])
+    app.add_url_rule('/api/schedule', 'get_user_exams', regiback.get_user_exams, methods=['GET'])
+    app.add_url_rule('/api/schedule/<int:registration_id>', 'cancel_exam', regiback.cancel_exam, methods=['DELETE'])
 except ImportError as e:
     print(f"Warning: Could not import regiback: {e}")
 
