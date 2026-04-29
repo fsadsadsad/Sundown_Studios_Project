@@ -327,3 +327,218 @@ def cancel_exam():
     except Exception as e:
         print(f"Error during cancel_exam: {e}")
         return jsonify({'success': False, 'message': 'An unexpected server error occurred.'}), 500
+
+
+def get_classes(get_db_connection):
+    """
+    Fetch all classes from the database
+    Returns JSON: {"success": true, "classes": [{"ClassID": 1, "ClassName": "ENG"}, ...]}
+    """
+    try:
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Query all classes from the class table
+        query = "SELECT ClassID, ClassName FROM class ORDER BY ClassName ASC"
+        cursor.execute(query)
+        classes = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'classes': classes
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching classes: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while fetching classes'}), 500
+
+
+def get_exams_by_class(class_id, get_db_connection):
+    """
+    Fetch all exams for a specific class ID from the database
+    Returns JSON: {"success": true, "exams": [{"ExamID": 1, "ExamName": "Midterm"}, ...]}
+    """
+    try:
+        if not class_id:
+            return jsonify({'success': False, 'message': 'Class ID is required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Query all exams for the given ClassID
+        query = "SELECT ExamID, ExamName FROM Exam WHERE ClassID = %s ORDER BY ExamName ASC"
+        cursor.execute(query, (class_id,))
+        exams = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'exams': exams
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching exams: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while fetching exams'}), 500
+
+
+def get_campuses_by_exam(class_id, exam_id, get_db_connection):
+    """
+    Fetch all unique campuses for a specific class and exam
+    Returns JSON: {"success": true, "campuses": [{"LocationID": 1, "Campus": "Henderson"}, ...]}
+    """
+    try:
+        if not class_id or not exam_id:
+            return jsonify({'success': False, 'message': 'Class ID and Exam ID are required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Query distinct campuses for the given ClassID and ExamID
+        query = """
+            SELECT DISTINCT l.LocationID, l.Campus 
+            FROM Location l
+            INNER JOIN Exam e ON l.LocationID = e.LocationID
+            WHERE e.ClassID = %s AND e.ExamID = %s
+            ORDER BY l.Campus ASC
+        """
+        cursor.execute(query, (class_id, exam_id))
+        campuses = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'campuses': campuses
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching campuses: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while fetching campuses'}), 500
+
+
+def get_dates_by_campus(class_id, exam_id, location_id, get_db_connection):
+    """
+    Fetch all unique dates for a specific class, exam, and campus
+    Returns JSON: {"success": true, "dates": [{"SchedulesID": 1, "exam_date": "2026-05-10"}, ...]}
+    """
+    try:
+        if not class_id or not exam_id or not location_id:
+            return jsonify({'success': False, 'message': 'Class ID, Exam ID, and Location ID are required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # Query distinct dates for the given ClassID, ExamID, and LocationID
+        query = """
+            SELECT DISTINCT s.SchedulesID, s.exam_date 
+            FROM Schedules s
+            INNER JOIN Exam e ON s.SchedulesID = e.SchedulesID
+            WHERE e.ClassID = %s AND e.ExamID = %s AND e.LocationID = %s
+            ORDER BY s.exam_date ASC
+        """
+        cursor.execute(query, (class_id, exam_id, location_id))
+        dates = cursor.fetchall()
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'dates': dates
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching dates: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while fetching dates'}), 500
+
+
+def get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connection):
+    """
+    Fetch all times for a specific class, exam, campus, and date
+    Returns JSON: {"success": true, "times": [{"SchedulesID": 1, "exam_time": "08:00:00"}, ...]}
+    """
+    try:
+        print(f"get_times_by_date called with: class_id={class_id}, exam_id={exam_id}, location_id={location_id}, schedule_id={schedule_id}")
+        
+        if not class_id or not exam_id or not location_id or not schedule_id:
+            print("Missing required parameters")
+            return jsonify({'success': False, 'message': 'All parameters are required'}), 400
+        
+        connection = get_db_connection()
+        if not connection:
+            print("Database connection failed")
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cursor = connection.cursor(dictionary=True)
+        
+        # First get the selected date
+        print(f"Getting date for schedule_id: {schedule_id}")
+        cursor.execute("SELECT exam_date FROM Schedules WHERE SchedulesID = %s", (schedule_id,))
+        date_result = cursor.fetchone()
+        print(f"Date result: {date_result}")
+        
+        if not date_result:
+            print("Invalid schedule ID")
+            return jsonify({'success': False, 'message': 'Invalid schedule ID'}), 400
+        
+        selected_date = date_result['exam_date']
+        print(f"Selected date: {selected_date}")
+        
+        # Query all schedules with the same date that have exams matching the criteria
+        query = """
+            SELECT DISTINCT s.SchedulesID, s.exam_time 
+            FROM Schedules s
+            INNER JOIN Exam e ON s.SchedulesID = e.SchedulesID
+            WHERE s.exam_date = %s 
+            AND e.ClassID = %s 
+            AND e.ExamID = %s 
+            AND e.LocationID = %s
+            ORDER BY s.exam_time ASC
+        """
+        print(f"Executing query with params: {selected_date}, {class_id}, {exam_id}, {location_id}")
+        cursor.execute(query, (selected_date, class_id, exam_id, location_id))
+        times = cursor.fetchall()
+        print(f"Times found: {times}")
+
+        # Convert TIMEDIFF / time objects into JSON-safe strings
+        for item in times:
+            exam_time = item.get('exam_time')
+            if isinstance(exam_time, timedelta):
+                total_seconds = int(exam_time.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes = remainder // 60
+                item['exam_time'] = f"{hours:02d}:{minutes:02d}:00"
+            else:
+                item['exam_time'] = str(exam_time)
+        
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            'success': True,
+            'times': times
+        }), 200
+    
+    except Exception as e:
+        print(f"Error fetching times: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': 'An error occurred while fetching times'}), 500

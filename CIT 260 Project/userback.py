@@ -8,6 +8,7 @@ import sys
 
 # Import regiback from current directory
 sys.path.insert(0, os.path.dirname(__file__))
+import regiback
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -220,6 +221,41 @@ def register():
         print(f"Error during registration: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during registration'}), 500
 
+@app.route('/api/classes', methods=['GET'])
+def route_get_classes():
+    """Route handler for fetching classes"""
+    return regiback.get_classes(get_db_connection)
+
+@app.route('/api/exams', methods=['GET'])
+def route_get_exams():
+    """Route handler for fetching exams by class ID"""
+    class_id = request.args.get('class_id')
+    return regiback.get_exams_by_class(class_id, get_db_connection)
+
+@app.route('/api/campuses', methods=['GET'])
+def route_get_campuses():
+    """Route handler for fetching campuses by class and exam"""
+    class_id = request.args.get('class_id')
+    exam_id = request.args.get('exam_id')
+    return regiback.get_campuses_by_exam(class_id, exam_id, get_db_connection)
+
+@app.route('/api/dates', methods=['GET'])
+def route_get_dates():
+    """Route handler for fetching dates by class, exam, and location"""
+    class_id = request.args.get('class_id')
+    exam_id = request.args.get('exam_id')
+    location_id = request.args.get('location_id')
+    return regiback.get_dates_by_campus(class_id, exam_id, location_id, get_db_connection)
+
+@app.route('/api/times', methods=['GET'])
+def route_get_times():
+    """Route handler for fetching times by class, exam, location, and date"""
+    class_id = request.args.get('class_id')
+    exam_id = request.args.get('exam_id')
+    location_id = request.args.get('location_id')
+    schedule_id = request.args.get('schedule_id')
+    return regiback.get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connection)
+
 @app.route('/regipage.html')
 def regipage():
     """Serve the regipage.html"""
@@ -235,15 +271,11 @@ def user_registration_page():
     """Serve the user_registration.html"""
     return send_from_directory(os.path.dirname(__file__), 'user_registration.html')
 
-# Import and register regiback routes
-try:
-    import regiback
-    app.add_url_rule('/api/logout',  'logout',       regiback.logout,       methods=['POST'])
-    app.add_url_rule('/api/schedule', 'schedule_exam', regiback.schedule_exam, methods=['POST'])
-    app.add_url_rule('/api/schedule', 'get_user_exams', regiback.get_user_exams, methods=['GET'])
-    app.add_url_rule('/api/schedule/<int:registration_id>', 'cancel_exam', regiback.cancel_exam, methods=['DELETE'])
-except ImportError as e:
-    print(f"Warning: Could not import regiback: {e}")
+# Register regiback routes with Flask
+app.add_url_rule('/api/logout', 'logout_from_regiback', regiback.logout, methods=['POST'])
+app.add_url_rule('/api/schedule', 'schedule_exam', regiback.schedule_exam, methods=['POST'])
+app.add_url_rule('/api/schedule', 'get_user_exams', regiback.get_user_exams, methods=['GET'])
+app.add_url_rule('/api/schedule/<int:registration_id>', 'cancel_exam', regiback.cancel_exam, methods=['DELETE'])
 
 if __name__ == '__main__':
     if init_database():

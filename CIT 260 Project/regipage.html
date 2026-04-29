@@ -19,57 +19,54 @@
     <!-- LEFT: Scheduling Form -->
     <div id="schedule-card">
  
-      <div class="form-row">
-        <div class="form-group">
-          <label for="time">Time:</label>
-          <input type="time" id="time" name="time" />
-        </div>
-        <div class="form-group">
-          <label for="date">Date:</label>
-          <input type="date" id="date" name="date" />
-        </div>
-      </div>
- 
-      <div class="form-group">
-        <label for="location">Location:</label>
-        <!--input type="text" id="location" name="location" placeholder="e.g. Henderson Campus" readonly/-->
-        <select id="location" name="location" placeholder="e.g. Henderson Campus">
-            <option value="Henderson">Henderson Campus</option>
-            <option value="Charleston">Charleston Campus</option>
-            <option value="North">North Las Vegas Campus</option>
-        </select>
-      </div>
- 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="building">Building:</label>
-          <input type="text" id="building" name="building" placeholder="e.g. Building A" readonly/>
-        </div>
-        <div class="form-group">
-          <label for="room">Room Number:</label>
-          <input type="text" id="room" name="room" placeholder="e.g. 101" readonly/>
-        </div>
-      </div>
- 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="subject">Subject:</label>
-          <!--input type="text" id="subject" name="subject" placeholder="e.g. ENG" /-->
+      <!-- 1. Class (Dropdown) with error handling -->
+      <div id="class-group" class="form-group">
+        <label for="class">Class:</label>
         <div class="dropdown">
-          <select id="subject" name="subject" placeholder="e.g. ENG">
-            <option value="ENG">ENGLISH</option>
-            <option value="ENG">MATH</option>
-            <option value="ENG">BIOLOGY</option>
-            <option value="ENG">HISTORY</option>
+          <select id="class" name="class">
+            <option value="">Loading classes...</option>
           </select>
         </div>
+        <span id="class-error" class="error-message"></span>
+      </div>
+ 
+      <!-- 2. Exam Name (Dropdown) - populated based on class selection -->
+      <div id="exam-group" class="form-group">
+        <label for="exam-name">Exam Name:</label>
+        <select id="exam-name" name="exam-name" disabled>
+          <option value="">Select a Class First</option>
+        </select>
+        <span id="exam-error" class="error-message"></span>
+      </div>
+ 
+      <!-- 3. Campus / Location (Dropdown) -->
+      <div id="location-group" class="form-group">
+        <label for="location">Campus / Location:</label>
+        <select id="location" name="location" disabled>
+            <option value="">Select an Exam First</option>
+        </select>
+        <span id="location-error" class="error-message"></span>
+      </div>
+ 
+      <!-- 4. Date (Dropdown) & 5. Time (Dropdown) -->
+      <div class="form-row">
+        <div id="date-group" class="form-group">
+          <label for="date">Date:</label>
+          <select id="date" name="date" disabled>
+            <option value="">Select a Campus First</option>
+          </select>
+          <span id="date-error" class="error-message"></span>
         </div>
-        <div class="form-group">
-          <label for="proctor">Proctor:</label>
-          <input type="text" id="proctor" name="proctor" placeholder="e.g. Mr. Smith" readonly/>
+        <div id="time-group" class="form-group">
+          <label for="time">Time:</label>
+          <select id="time" name="time" disabled>
+            <option value="">Select a Date First</option>
+          </select>
+          <span id="time-error" class="error-message"></span>
         </div>
       </div>
  
+      <!-- Schedule Exam Button -->
       <div class="form-group">
         <button type="button" id="submitbutton">Schedule Exam</button>
       </div>
@@ -122,111 +119,235 @@
   </footer>
  
   <script>
-    // ── Helpers ────────────────────────────────────────────────────────────
-    const userId = localStorage.getItem('user_id');
+    document.addEventListener('DOMContentLoaded', () => {
+      const classSelect = document.getElementById('class');
+      const examSelect = document.getElementById('exam-name');
+      const locationSelect = document.getElementById('location');
+      const dateSelect = document.getElementById('date');
+      const timeSelect = document.getElementById('time');
 
-    function fmtTime(t) {
-      // "HH:MM" → "h:MM AM/PM"
-      const [h, m] = t.split(':').map(Number);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const hr   = h % 12 || 12;
-      return `${hr}:${String(m).padStart(2,'0')} ${ampm}`;
-    }
+      const classGroup = document.getElementById('class-group');
+      const examGroup = document.getElementById('exam-group');
+      const locationGroup = document.getElementById('location-group');
+      const dateGroup = document.getElementById('date-group');
+      const timeGroup = document.getElementById('time-group');
 
-    // ── Render exam slots ──────────────────────────────────────────────────
-    function renderExams(exams) {
-      for (let i = 1; i <= 3; i++) {
-        const slot   = document.getElementById(`exam-slot-${i}`);
-        const info   = slot.querySelector('.exam-info');
-        const btn    = slot.querySelector('.cancel-btn');
-        const exam   = exams[i - 1];
+      const classError = document.getElementById('class-error');
+      const examError = document.getElementById('exam-error');
+      const locationError = document.getElementById('location-error');
+      const dateError = document.getElementById('date-error');
+      const timeError = document.getElementById('time-error');
 
-        if (exam) {
-          slot.classList.add('filled');
-          info.innerHTML = `
-            <span class="exam-subject">${exam.subject}</span>
-            <span class="exam-datetime">${exam.date} &nbsp;·&nbsp; ${fmtTime(exam.time)}</span>
-            <span class="exam-location">${exam.location} — ${exam.building}, Room ${exam.room}</span>`;
-          btn.disabled = false;
-          btn.dataset.regId = exam.id;
-        } else {
-          slot.classList.remove('filled');
-          info.innerHTML = `
-            <span class="exam-label">Exam ${i}</span>
-            <span class="exam-detail">No exam scheduled</span>`;
-          btn.disabled = true;
-          delete btn.dataset.regId;
-        }
-      }
-    }
+      const resetSelect = (select, placeholder) => {
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+        select.disabled = true;
+      };
 
-    // ── Load existing exams on page open ───────────────────────────────────
-    function loadExams() {
-      if (!userId) return;
-      fetch(`http://localhost:5000/api/schedule?user_id=${userId}`)
-        .then(r => r.json())
-        .then(data => { if (data.success) renderExams(data.exams); })
-        .catch(err => console.error('Could not load exams:', err));
-    }
+      const clearError = (group, error) => {
+        group.classList.remove('error');
+        error.classList.remove('show');
+        error.textContent = '';
+      };
 
-    loadExams();
+      const showError = (group, error, message) => {
+        group.classList.add('error');
+        error.classList.add('show');
+        error.textContent = message;
+      };
 
-    // ── Schedule exam ──────────────────────────────────────────────────────
-    document.getElementById('submitbutton').addEventListener('click', () => {
-      if (!userId) { alert('You are not logged in.'); return; }
+      const fetchJson = (url) => fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      }).then(r => r.json());
 
-      const date     = document.getElementById('date').value;
-      const time     = document.getElementById('time').value;
-      const location = document.getElementById('location').value;
-      const building = document.getElementById('building').value;
-      const room     = document.getElementById('room').value;
-      const subject  = document.getElementById('subject').value;
-      const proctor  = document.getElementById('proctor').value;
-
-      if (!date || !time || !location || !subject) {
-        alert('Please fill in Date, Time, Location, and Subject.');
-        return;
-      }
-
-      fetch('http://localhost:5000/api/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, date, time, location, building, room, subject, proctor })
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          alert('Exam scheduled!');
-          loadExams();
-        } else {
-          alert('Error: ' + data.message);
-        }
-      })
-      .catch(err => { console.error(err); alert('Network or server error'); });
-    });
-
-    // ── Cancel exam (event delegation on all cancel buttons) ───────────────
-    document.querySelectorAll('.cancel-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const regId = btn.dataset.regId;
-        if (!regId || !userId) return;
-        if (!confirm('Cancel this exam?')) return;
-
-        fetch(`http://localhost:5000/api/schedule/${regId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        })
-        .then(r => r.json())
+      fetchJson('http://localhost:5000/api/classes')
         .then(data => {
-          if (data.success) { loadExams(); }
-          else { alert('Error: ' + data.message); }
+          if (data.success && data.classes) {
+            classSelect.innerHTML = '<option value="">Select a Class</option>';
+            data.classes.forEach(cls => {
+              const option = document.createElement('option');
+              option.value = cls.ClassID;
+              option.textContent = cls.ClassName;
+              classSelect.appendChild(option);
+            });
+          } else {
+            classSelect.innerHTML = '<option value="">Unable to load classes</option>';
+            console.error('Classes load failed:', data.message);
+          }
         })
-        .catch(err => { console.error(err); alert('Network or server error'); });
+        .catch(err => {
+          classSelect.innerHTML = '<option value="">Unable to load classes</option>';
+          console.error('Error fetching classes:', err);
+        });
+
+      classSelect.addEventListener('change', () => {
+        const classId = classSelect.value;
+        clearError(classGroup, classError);
+        resetSelect(examSelect, 'Select an Exam');
+        resetSelect(locationSelect, 'Select an Exam First');
+        resetSelect(dateSelect, 'Select a Campus First');
+        resetSelect(timeSelect, 'Select a Date First');
+
+        if (!classId) {
+          showError(classGroup, classError, 'Please select a class');
+          return;
+        }
+
+        fetchJson(`http://localhost:5000/api/exams?class_id=${classId}`)
+          .then(data => {
+            if (data.success && data.exams) {
+              examSelect.innerHTML = '<option value="">Select an Exam</option>';
+              if (data.exams.length === 0) {
+                examSelect.innerHTML = '<option value="">No exams available</option>';
+              } else {
+                data.exams.forEach(exam => {
+                  const option = document.createElement('option');
+                  option.value = exam.ExamID;
+                  option.textContent = exam.ExamName;
+                  examSelect.appendChild(option);
+                });
+                examSelect.disabled = false;
+              }
+            } else {
+              resetSelect(examSelect, 'Unable to load exams');
+              console.error('Exam load failed:', data.message);
+            }
+          })
+          .catch(err => {
+            resetSelect(examSelect, 'Unable to load exams');
+            console.error('Error fetching exams:', err);
+          });
+      });
+
+      examSelect.addEventListener('change', () => {
+        const classId = classSelect.value;
+        const examId = examSelect.value;
+        clearError(examGroup, examError);
+        resetSelect(locationSelect, 'Select a Campus');
+        resetSelect(dateSelect, 'Select a Campus First');
+        resetSelect(timeSelect, 'Select a Date First');
+
+        if (!examId) {
+          showError(examGroup, examError, 'Please select an exam');
+          return;
+        }
+
+        fetchJson(`http://localhost:5000/api/campuses?class_id=${classId}&exam_id=${examId}`)
+          .then(data => {
+            if (data.success && data.campuses) {
+              locationSelect.innerHTML = '<option value="">Select a Campus</option>';
+              if (data.campuses.length === 0) {
+                locationSelect.innerHTML = '<option value="">No campuses available</option>';
+              } else {
+                data.campuses.forEach(campus => {
+                  const option = document.createElement('option');
+                  option.value = campus.LocationID;
+                  option.textContent = campus.Campus;
+                  locationSelect.appendChild(option);
+                });
+                locationSelect.disabled = false;
+              }
+            } else {
+              resetSelect(locationSelect, 'Unable to load campuses');
+              console.error('Campus load failed:', data.message);
+            }
+          })
+          .catch(err => {
+            resetSelect(locationSelect, 'Unable to load campuses');
+            console.error('Error fetching campuses:', err);
+          });
+      });
+
+      locationSelect.addEventListener('change', () => {
+        const classId = classSelect.value;
+        const examId = examSelect.value;
+        const locationId = locationSelect.value;
+        clearError(locationGroup, locationError);
+        resetSelect(dateSelect, 'Select a Date');
+        resetSelect(timeSelect, 'Select a Date First');
+
+        if (!locationId) {
+          showError(locationGroup, locationError, 'Please select a campus');
+          return;
+        }
+
+        fetchJson(`http://localhost:5000/api/dates?class_id=${classId}&exam_id=${examId}&location_id=${locationId}`)
+          .then(data => {
+            if (data.success && data.dates) {
+              dateSelect.innerHTML = '<option value="">Select a Date</option>';
+              if (data.dates.length === 0) {
+                dateSelect.innerHTML = '<option value="">No dates available</option>';
+              } else {
+                data.dates.forEach(item => {
+                  const option = document.createElement('option');
+                  option.value = item.SchedulesID;
+                  const dateObj = new Date(item.exam_date);
+                  option.textContent = dateObj.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                  });
+                  dateSelect.appendChild(option);
+                });
+                dateSelect.disabled = false;
+              }
+            } else {
+              resetSelect(dateSelect, 'Unable to load dates');
+              console.error('Date load failed:', data.message);
+            }
+          })
+          .catch(err => {
+            resetSelect(dateSelect, 'Unable to load dates');
+            console.error('Error fetching dates:', err);
+          });
+      });
+
+      dateSelect.addEventListener('change', () => {
+        const classId = classSelect.value;
+        const examId = examSelect.value;
+        const locationId = locationSelect.value;
+        const scheduleId = dateSelect.value;
+        clearError(dateGroup, dateError);
+        resetSelect(timeSelect, 'Select a Time');
+
+        if (!scheduleId) {
+          showError(dateGroup, dateError, 'Please select a date');
+          return;
+        }
+
+        fetchJson(`http://localhost:5000/api/times?class_id=${classId}&exam_id=${examId}&location_id=${locationId}&schedule_id=${scheduleId}`)
+          .then(data => {
+            if (data.success && data.times) {
+              timeSelect.innerHTML = '<option value="">Select a Time</option>';
+              if (data.times.length === 0) {
+                timeSelect.innerHTML = '<option value="">No times available</option>';
+              } else {
+                data.times.forEach(item => {
+                  const option = document.createElement('option');
+                  option.value = item.SchedulesID;
+                  const [hour, minute] = item.exam_time.split(':');
+                  const hourInt = parseInt(hour, 10);
+                  const ampm = hourInt >= 12 ? 'PM' : 'AM';
+                  const displayHour = hourInt % 12 || 12;
+                  option.textContent = `${displayHour}:${minute} ${ampm}`;
+                  timeSelect.appendChild(option);
+                });
+                timeSelect.disabled = false;
+              }
+            } else {
+              resetSelect(timeSelect, 'Unable to load times');
+              console.error('Time load failed:', data.message);
+            }
+          })
+          .catch(err => {
+            resetSelect(timeSelect, 'Unable to load times');
+            console.error('Error fetching times:', err);
+          });
+      });
+
+      timeSelect.addEventListener('change', () => {
+        clearError(timeGroup, timeError);
       });
     });
 
-    // ── Logout ─────────────────────────────────────────────────────────────
     document.getElementById('logoutbutton').addEventListener('click', () => {
       fetch('http://localhost:5000/api/logout', {
         method: 'POST',
@@ -246,6 +367,6 @@
       .catch(err => { console.error(err); alert('Network or server error'); });
     });
   </script>
- 
+
 </body>
 </html>

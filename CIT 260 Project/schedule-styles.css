@@ -71,6 +71,7 @@ main {
   justify-content: center;
   gap: 32px;
   padding: 48px;
+  overflow: visible;
 }
  
 /* ---------- Shared card style ---------- */
@@ -82,6 +83,7 @@ main {
   border-top: 4px solid var(--csn-blue);
   flex: 1;
   max-width: 520px;
+  overflow: visible;
 }
  
 /* ---------- Schedule Form Card ---------- */
@@ -90,6 +92,7 @@ main {
   display: flex;
   flex-direction: column;
   gap: 22px;
+  overflow: visible;
 }
  
 /* ---------- Scheduled Exams Card ---------- */
@@ -220,18 +223,60 @@ main {
 .form-row {
   display: flex;
   gap: 20px;
+  overflow: visible;
 }
  
 .form-row .form-group {
   flex: 1;
+  overflow: visible;
 }
  
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 7px;
+  overflow: visible;
 }
- 
+
+/* ---------- Error States ---------- */
+#class-group.error,
+#exam-group.error,
+#location-group.error,
+#date-group.error,
+#time-group.error {
+  border: 1.5px solid #c0392b;
+  border-radius: var(--radius);
+  padding: 10px;
+  background: rgba(192, 57, 43, 0.05);
+}
+
+#class-group.error select,
+#exam-group.error select,
+#location-group.error select,
+#date-group.error select,
+#time-group.error select {
+  border-color: #c0392b;
+}
+
+.error-message {
+  font-size: 0.75rem;
+  color: #c0392b;
+  font-weight: 600;
+  display: none;
+  margin-top: 4px;
+}
+
+.error-message.show {
+  display: block;
+}
+
+/* Disabled state styling */
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f0f0f0;
+}
+
 /* ---------- Labels ---------- */
 label {
   font-size: 0.78rem;
@@ -244,7 +289,8 @@ label {
 /* ---------- Inputs ---------- */
 input[type="text"],
 input[type="time"],
-input[type="date"] {
+input[type="date"],
+select {
   width: 100%;
   padding: 11px 14px;
   border: 1.5px solid var(--border-color);
@@ -256,21 +302,40 @@ input[type="date"] {
   background: var(--off-white);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  position: relative;
+  z-index: 10;
 }
- 
+
 input[type="text"]:focus,
 input[type="time"]:focus,
-input[type="date"]:focus {
+input[type="date"]:focus,
+select:focus {
   border-color: var(--csn-blue);
   background: var(--white);
   box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.10);
+  z-index: 1000;
 }
- 
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003DA5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+select option {
+  color: var(--text-dark);
+  background: var(--white);
+}
+
 input::placeholder {
   color: #b0bdd4;
   font-style: italic;
 }
- 
+
 /* ---------- Submit Button ---------- */
 #submitbutton {
   width: 100%;
