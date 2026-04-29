@@ -122,34 +122,129 @@
   </footer>
  
   <script>
-    // Handle logout button
+    // ── Helpers ────────────────────────────────────────────────────────────
+    const userId = localStorage.getItem('user_id');
+
+    function fmtTime(t) {
+      // "HH:MM" → "h:MM AM/PM"
+      const [h, m] = t.split(':').map(Number);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hr   = h % 12 || 12;
+      return `${hr}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    // ── Render exam slots ──────────────────────────────────────────────────
+    function renderExams(exams) {
+      for (let i = 1; i <= 3; i++) {
+        const slot   = document.getElementById(`exam-slot-${i}`);
+        const info   = slot.querySelector('.exam-info');
+        const btn    = slot.querySelector('.cancel-btn');
+        const exam   = exams[i - 1];
+
+        if (exam) {
+          slot.classList.add('filled');
+          info.innerHTML = `
+            <span class="exam-subject">${exam.subject}</span>
+            <span class="exam-datetime">${exam.date} &nbsp;·&nbsp; ${fmtTime(exam.time)}</span>
+            <span class="exam-location">${exam.location} — ${exam.building}, Room ${exam.room}</span>`;
+          btn.disabled = false;
+          btn.dataset.regId = exam.id;
+        } else {
+          slot.classList.remove('filled');
+          info.innerHTML = `
+            <span class="exam-label">Exam ${i}</span>
+            <span class="exam-detail">No exam scheduled</span>`;
+          btn.disabled = true;
+          delete btn.dataset.regId;
+        }
+      }
+    }
+
+    // ── Load existing exams on page open ───────────────────────────────────
+    function loadExams() {
+      if (!userId) return;
+      fetch(`http://localhost:5000/api/schedule?user_id=${userId}`)
+        .then(r => r.json())
+        .then(data => { if (data.success) renderExams(data.exams); })
+        .catch(err => console.error('Could not load exams:', err));
+    }
+
+    loadExams();
+
+    // ── Schedule exam ──────────────────────────────────────────────────────
+    document.getElementById('submitbutton').addEventListener('click', () => {
+      if (!userId) { alert('You are not logged in.'); return; }
+
+      const date     = document.getElementById('date').value;
+      const time     = document.getElementById('time').value;
+      const location = document.getElementById('location').value;
+      const building = document.getElementById('building').value;
+      const room     = document.getElementById('room').value;
+      const subject  = document.getElementById('subject').value;
+      const proctor  = document.getElementById('proctor').value;
+
+      if (!date || !time || !location || !subject) {
+        alert('Please fill in Date, Time, Location, and Subject.');
+        return;
+      }
+
+      fetch('http://localhost:5000/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, date, time, location, building, room, subject, proctor })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          alert('Exam scheduled!');
+          loadExams();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(err => { console.error(err); alert('Network or server error'); });
+    });
+
+    // ── Cancel exam (event delegation on all cancel buttons) ───────────────
+    document.querySelectorAll('.cancel-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const regId = btn.dataset.regId;
+        if (!regId || !userId) return;
+        if (!confirm('Cancel this exam?')) return;
+
+        fetch(`http://localhost:5000/api/schedule/${regId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) { loadExams(); }
+          else { alert('Error: ' + data.message); }
+        })
+        .catch(err => { console.error(err); alert('Network or server error'); });
+      });
+    });
+
+    // ── Logout ─────────────────────────────────────────────────────────────
     document.getElementById('logoutbutton').addEventListener('click', () => {
       fetch('http://localhost:5000/api/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
       })
-      .then(resp => resp.json())
+      .then(r => r.json())
       .then(data => {
         if (data.success) {
-          // Clear local credentials
           localStorage.removeItem('username');
           localStorage.removeItem('user_id');
-          // Redirect to login page
           window.location.href = 'login.html';
         } else {
           alert('Error: ' + data.message);
         }
       })
-      .catch(err => {
-        console.error(err);
-        alert('Network or server error');
-      });
+      .catch(err => { console.error(err); alert('Network or server error'); });
     });
-    
-    // TODO: wire up to Flask backend
-    // submitbutton  → POST   /api/schedule  → refresh exam slots
-    // cancel-btn    → DELETE /api/schedule/:id → refresh exam slots
   </script>
  
 </body>
