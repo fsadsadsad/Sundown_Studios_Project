@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="styles_faculty.css" rel="stylesheet" type="text/css" />
+  <title>CSN — Faculty Exam Edit</title>
+</head>
+<body>
+
+  <!-- Top blue header bar -->
+  <header id="page-header">
+    <h1 id="title">Faculty Exam Edit</h1>
+  </header>
+
+  <main>
+
+    <!-- LEFT: Enrolled students list + logout -->
+    <div id="enrolled-list">
+
+      <h2 id="enrolled-heading">Enrolled Students</h2>
+
+      <!-- Scrollable list of students currently in exam list -->
+      <div id="student-scroll">
+
+        <!-- Entries are populated here by the backend / JS.
+             Sample entries below show the intended structure. -->
+
+        <div class="student-entry" id="entry-1">
+          <div class="student-info">
+            <span class="student-name">Jane Doe</span>
+            <span class="student-detail">Time: 9:00 AM &nbsp;|&nbsp; Date: 2026-05-10</span>
+            <span class="student-detail">Location: Henderson Campus</span>
+            <span class="student-detail">Building: A &nbsp;|&nbsp; Room: 101</span>
+          </div>
+          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Jane Doe')">Remove</button>
+        </div>
+
+        <div class="student-entry" id="entry-2">
+          <div class="student-info">
+            <span class="student-name">John Smith</span>
+            <span class="student-detail">Time: 10:30 AM &nbsp;|&nbsp; Date: 2026-05-10</span>
+            <span class="student-detail">Location: Charleston Campus</span>
+            <span class="student-detail">Building: B &nbsp;|&nbsp; Room: 204</span>
+          </div>
+          <button type="button" class="kick-btn" onclick="kickStudent(this, 'John Smith')">Remove</button>
+        </div>
+
+        <div class="student-entry" id="entry-3">
+          <div class="student-info">
+            <span class="student-name">Maria Garcia</span>
+            <span class="student-detail">Time: 1:00 PM &nbsp;|&nbsp; Date: 2026-05-11</span>
+            <span class="student-detail">Location: North Las Vegas Campus</span>
+            <span class="student-detail">Building: C &nbsp;|&nbsp; Room: 312</span>
+          </div>
+          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Maria Garcia')">Remove</button>
+        </div>
+
+        <div class="student-entry" id="entry-4">
+          <div class="student-info">
+            <span class="student-name">David Lee</span>
+            <span class="student-detail">Time: 2:30 PM &nbsp;|&nbsp; Date: 2026-05-11</span>
+            <span class="student-detail">Location: Henderson Campus</span>
+            <span class="student-detail">Building: A &nbsp;|&nbsp; Room: 108</span>
+          </div>
+          <button type="button" class="kick-btn" onclick="kickStudent(this, 'David Lee')">Remove</button>
+        </div>
+
+        <div class="student-entry" id="entry-5">
+          <div class="student-info">
+            <span class="student-name">Sarah Johnson</span>
+            <span class="student-detail">Time: 8:00 AM &nbsp;|&nbsp; Date: 2026-05-12</span>
+            <span class="student-detail">Location: Charleston Campus</span>
+            <span class="student-detail">Building: D &nbsp;|&nbsp; Room: 415</span>
+          </div>
+          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Sarah Johnson')">Remove</button>
+        </div>
+
+      </div>
+      <!-- END #student-scroll -->
+
+      <!-- Red logout button pinned to bottom of left panel -->
+      <div id="logout-wrapper">
+        <button type="button" id="logoutbutton" onclick="handleLogout()">Log Out</button>
+      </div>
+
+    </div>
+    <!-- END #enrolled-list -->
+
+    <!-- RIGHT: Add / edit student form -->
+    <div id="add-form-card">
+
+      <h2 id="form-heading">Add Student to Exam</h2>
+
+      <!-- Student dropdown -->
+      <div class="form-group">
+        <label for="student-select">Student</label>
+        <select id="student-select" name="student" onchange="populateStudentDetails(this.value)">
+          <option value="" disabled selected>— Select a student —</option>
+          <option value="jane_doe">Jane Doe</option>
+          <option value="john_smith">John Smith</option>
+          <option value="maria_garcia">Maria Garcia</option>
+          <option value="david_lee">David Lee</option>
+          <option value="sarah_johnson">Sarah Johnson</option>
+          <option value="carlos_martinez">Carlos Martinez</option>
+          <option value="emily_chen">Emily Chen</option>
+          <option value="michael_brown">Michael Brown</option>
+        </select>
+      </div>
+
+      <!-- Time and date -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="exam-time">Time</label>
+          <input type="time" id="exam-time" name="time" />
+        </div>
+        <div class="form-group">
+          <label for="exam-date">Date</label>
+          <input type="date" id="exam-date" name="date" />
+        </div>
+      </div>
+
+      <!-- Location (auto-populated, readonly) -->
+      <div class="form-group">
+        <label for="exam-location">Location</label>
+        <input type="text" id="exam-location" name="location"
+               placeholder="e.g. North Las Vegas Campus"
+               readonly />
+      </div>
+
+      <!-- Building and room (auto-populated, readonly) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="exam-building">Building</label>
+          <input type="text" id="exam-building" name="building"
+                 placeholder="e.g. Building A"
+                 readonly />
+        </div>
+        <div class="form-group">
+          <label for="exam-room">Room Number</label>
+          <input type="text" id="exam-room" name="room"
+                 placeholder="e.g. Room 101"
+                 readonly />
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-group">
+        <button type="button" id="addbutton" onclick="addStudent()">Add to Exam List</button>
+      </div>
+
+    </div>
+    <!-- END #add-form-card -->
+
+  </main>
+
+  <footer id="page-footer">
+    <span>College of Southern Nevada</span>
+  </footer>
+
+  <script>
+    // Sample student → location mapping.
+    // TODO: replace with a real API call once the backend is wired up.
+    const studentData = {
+      jane_doe:       { location: 'Henderson Campus',       building: 'A', room: '101' },
+      john_smith:     { location: 'Charleston Campus',      building: 'B', room: '204' },
+      maria_garcia:   { location: 'North Las Vegas Campus', building: 'C', room: '312' },
+      david_lee:      { location: 'Henderson Campus',       building: 'A', room: '108' },
+      sarah_johnson:  { location: 'Charleston Campus',      building: 'D', room: '415' },
+      carlos_martinez:{ location: 'North Las Vegas Campus', building: 'C', room: '305' },
+      emily_chen:     { location: 'Henderson Campus',       building: 'B', room: '210' },
+      michael_brown:  { location: 'Charleston Campus',      building: 'A', room: '112' },
+    };
+
+    function populateStudentDetails(value) {
+      const data = studentData[value];
+      document.getElementById('exam-location').value = data ? data.location : '';
+      document.getElementById('exam-building').value = data ? data.building : '';
+      document.getElementById('exam-room').value      = data ? data.room      : '';
+    }
+
+    function kickStudent(btn, name) {
+      const confirmed = confirm(
+        'Remove ' + name + ' from the exam list?\n\nThis action cannot be undone.'
+      );
+      if (confirmed) {
+        const entry = btn.closest('.student-entry');
+        if (entry) entry.remove();
+        // TODO: POST /api/faculty/remove { student: name } → refresh list from backend
+      }
+    }
+
+    function addStudent() {
+      // TODO: POST /api/faculty/add → refresh enrolled list from backend
+      alert('Student added to exam list.\n(Backend integration pending.)');
+    }
+
+    function handleLogout() {
+      // TODO: POST /api/logout → redirect to login page
+      window.location.href = 'login.html';
+    }
+  </script>
+
+</body>
+</html>
