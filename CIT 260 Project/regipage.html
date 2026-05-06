@@ -245,6 +245,9 @@
                   const option = document.createElement('option');
                   option.value = campus.LocationID;
                   option.textContent = campus.Campus;
+                  option.dataset.campus   = campus.Campus;
+                  option.dataset.building = campus.Building || '';
+                  option.dataset.room     = campus.Room     || '';
                   locationSelect.appendChild(option);
                 });
                 locationSelect.disabled = false;
@@ -283,7 +286,8 @@
                 data.dates.forEach(item => {
                   const option = document.createElement('option');
                   option.value = item.SchedulesID;
-                  const dateObj = new Date(item.exam_date);
+                  option.dataset.date = item.exam_date;
+                  const dateObj = new Date(item.exam_date + 'T00:00:00');
                   option.textContent = dateObj.toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
                   });
@@ -325,6 +329,7 @@
                 data.times.forEach(item => {
                   const option = document.createElement('option');
                   option.value = item.SchedulesID;
+                  option.dataset.time = item.exam_time;
                   const [hour, minute] = item.exam_time.split(':');
                   const hourInt = parseInt(hour, 10);
                   const ampm = hourInt >= 12 ? 'PM' : 'AM';
@@ -350,7 +355,59 @@
       });
     });
 
-    document.getElementById('logoutbutton').addEventListener('click', () => {
+    document.getElementById('submitbutton').addEventListener('click', () => {
+        let valid = true;
+        if (!classSelect.value)    { showError(classGroup, classError, 'Please select a class'); valid = false; }
+        if (!locationSelect.value) { showError(locationGroup, locationError, 'Please select a campus'); valid = false; }
+        if (!dateSelect.value)     { showError(dateGroup, dateError, 'Please select a date'); valid = false; }
+        if (!timeSelect.value)     { showError(timeGroup, timeError, 'Please select a time'); valid = false; }
+        if (!valid) return;
+
+        const locOpt   = locationSelect.options[locationSelect.selectedIndex];
+        const dateOpt  = dateSelect.options[dateSelect.selectedIndex];
+        const timeOpt  = timeSelect.options[timeSelect.selectedIndex];
+        const classOpt = classSelect.options[classSelect.selectedIndex];
+
+        const userId   = localStorage.getItem('user_id');
+        const username = localStorage.getItem('username');
+        if (!userId) { alert('You must be logged in.'); window.location.href = 'login.html'; return; }
+
+        fetch('http://localhost:5000/api/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            user_id:  parseInt(userId),
+            date:     dateOpt.dataset.date,
+            time:     timeOpt.dataset.time,
+            location: locOpt.dataset.campus,
+            building: locOpt.dataset.building,
+            room:     locOpt.dataset.room,
+            subject:  classOpt.textContent,
+            proctor:  ''
+          })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const reg = data.registration;
+            const params = new URLSearchParams({
+              studentName: username || '',
+              email:       username || '',
+              exam:        reg.subject,
+              examDate:    reg.date,
+              examTime:    reg.time,
+              location:    reg.location + (reg.building ? ' — ' + reg.building + ' Room ' + reg.room : '')
+            });
+            window.location.href = 'confirmation%20(1).html?' + params.toString();
+          } else {
+            alert('Error: ' + data.message);
+          }
+        })
+        .catch(err => { console.error(err); alert('Network or server error'); });
+      });
+
+      document.getElementById('logoutbutton').addEventListener('click', () => {
       fetch('http://localhost:5000/api/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
