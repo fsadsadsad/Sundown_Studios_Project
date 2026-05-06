@@ -5,6 +5,11 @@ from mysql.connector import Error
 import bcrypt
 import os
 import sys
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # loads GMAIL_ADDRESS, GMAIL_APP_PASSWORD, etc. from .env
+except ImportError:
+    pass  # python-dotenv not installed; env vars must be set manually
 
 # Import regiback from current directory
 sys.path.insert(0, os.path.dirname(__file__))
