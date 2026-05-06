@@ -67,8 +67,8 @@ def _get_or_create_exam(cursor, class_id, location_id, schedule_id, exam_name):
     """Return ExamID, creating the row if it doesn't exist."""
     cursor.execute(
         """SELECT ExamID FROM Exam
-           WHERE ClassID=%s AND LocationID=%s AND SchedulesID=%s""",
-        (class_id, location_id, schedule_id)
+           WHERE ClassID=%s AND LocationID=%s AND SchedulesID=%s AND ExamName=%s""",
+        (class_id, location_id, schedule_id, exam_name)
     )
     row = cursor.fetchone()
     if row:
@@ -129,6 +129,12 @@ def schedule_exam():
 
     Expects JSON:
     {
+        "user_id": <int>,
+        "exam_id": <int>  # From dropdown selection
+    }
+
+    Or for manual entry:
+    {
         "user_id":  <int>,
         "date":     "YYYY-MM-DD",
         "time":     "HH:MM",
@@ -146,34 +152,72 @@ def schedule_exam():
       4. Max 20 students per exam (also enforced by DB trigger).
     """
     try:
-        data      = request.get_json()
-        user_id   = data.get('user_id')
-        exam_date = data.get('date', '').strip()
-        exam_time = data.get('time', '').strip()
-        location  = data.get('location', '').strip()
-        building  = data.get('building', '').strip()
-        room      = data.get('room', '').strip()
-        subject   = data.get('subject', '').strip()
-        proctor   = data.get('proctor', '').strip()
+        data = request.get_json()
+        user_id = data.get('user_id')
+        exam_id = data.get('exam_id')  # New parameter for dropdown selection
 
-        # ── Basic validation ──────────────────────────────────────────────────
-        if not all([user_id, exam_date, exam_time, location, subject]):
-            return jsonify({'success': False,
-                            'message': 'Date, time, location, and subject are required.'}), 400
+        if exam_id:
+            # Registration via dropdown selection
+            if not user_id or not exam_id:
+                return jsonify({'success': False,
+                                'message': 'user_id and exam_id are required.'}), 400
 
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Database connection failed.'}), 500
+            conn = get_db_connection()
+            if not conn:
+                return jsonify({'success': False, 'message': 'Database connection failed.'}), 500
 
-        cursor = conn.cursor()
+            cursor = conn.cursor()
 
-        # ── Resolve / create supporting rows ─────────────────────────────────
-        location_id  = _get_or_create_location(cursor, location, building, room)
-        schedule_id  = _get_or_create_schedule(cursor, exam_date, exam_time)
-        class_id     = _get_or_create_class(cursor, subject)
-        exam_name    = f"{subject} Exam"
-        exam_id      = _get_or_create_exam(cursor, class_id, location_id,
-                                           schedule_id, exam_name)
+            # Get exam details
+            cursor.execute("""
+                SELECT e.ExamID, c.ClassName, l.Campus, l.Building, l.Room, s.exam_date, s.exam_time
+                FROM Exam e
+                JOIN class c ON e.ClassID = c.ClassID
+                JOIN Location l ON e.LocationID = l.LocationID
+                JOIN Schedules s ON e.SchedulesID = s.SchedulesID
+                WHERE e.ExamID = %s
+            """, (exam_id,))
+            exam_row = cursor.fetchone()
+            if not exam_row:
+                cursor.close(); conn.close()
+                return jsonify({'success': False, 'message': 'Exam not found.'}), 404
+
+            exam_date = str(exam_row[5])
+            exam_time = str(exam_row[6])[:5]  # HH:MM
+            subject = exam_row[1]
+            location = exam_row[2]
+            building = exam_row[3]
+            room = exam_row[4]
+            proctor = ''
+
+        else:
+            # Manual entry (original logic)
+            exam_date = data.get('date', '').strip()
+            exam_time = data.get('time', '').strip()
+            location  = data.get('location', '').strip()
+            building  = data.get('building', '').strip()
+            room      = data.get('room', '').strip()
+            subject   = data.get('subject', '').strip()
+            proctor   = data.get('proctor', '').strip()
+
+            # ── Basic validation ──────────────────────────────────────────────────
+            if not all([user_id, exam_date, exam_time, location, subject]):
+                return jsonify({'success': False,
+                                'message': 'Date, time, location, and subject are required.'}), 400
+
+            conn = get_db_connection()
+            if not conn:
+                return jsonify({'success': False, 'message': 'Database connection failed.'}), 500
+
+            cursor = conn.cursor()
+
+            # ── Resolve / create supporting rows ─────────────────────────────────
+            location_id  = _get_or_create_location(cursor, location, building, room)
+            schedule_id  = _get_or_create_schedule(cursor, exam_date, exam_time)
+            class_id     = _get_or_create_class(cursor, subject)
+            exam_name    = f"{subject} Exam"
+            exam_id      = _get_or_create_exam(cursor, class_id, location_id,
+                                               schedule_id, exam_name)
 
         # ── Rule 1: duplicate exam check ──────────────────────────────────────
         cursor.execute(
@@ -225,7 +269,7 @@ def schedule_exam():
                 'location': location,
                 'building': building,
                 'room':     room,
-                'proctor':  proctor
+                'proctor':  proctor or ''
             }
         }), 201
 

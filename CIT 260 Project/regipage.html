@@ -366,6 +366,71 @@
       })
       .catch(err => { console.error(err); alert('Network or server error'); });
     });
+
+    document.getElementById('submitbutton').addEventListener('click', () => {
+      const classSelect = document.getElementById('class');
+      const examSelect = document.getElementById('exam-name');
+      const locationSelect = document.getElementById('location');
+      const dateSelect = document.getElementById('date');
+      const timeSelect = document.getElementById('time');
+
+      const classId = classSelect.value;
+      const examId = examSelect.value;
+      const locationId = locationSelect.value;
+      const scheduleId = dateSelect.value;
+      const timeValue = timeSelect.value;
+
+      if (!classId || !examId || !locationId || !scheduleId || !timeValue) {
+        alert('Please select all required fields.');
+        return;
+      }
+
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        alert('User not logged in. Please log in again.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Get the selected values for display
+      const className = classSelect.options[classSelect.selectedIndex].text;
+      const examName = examSelect.options[examSelect.selectedIndex].text;
+      const locationName = locationSelect.options[locationSelect.selectedIndex].text;
+      const dateValue = dateSelect.options[dateSelect.selectedIndex].text;
+      const timeDisplay = timeSelect.options[timeSelect.selectedIndex].text;
+
+      // Call the schedule exam API
+      fetch('http://localhost:5000/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          user_id: userId,
+          exam_id: examId
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          // Redirect to confirmation with all details
+          const params = new URLSearchParams({
+            studentName: localStorage.getItem('username') || 'Student',
+            email: localStorage.getItem('username') + '@student.csn.edu',
+            subject: data.registration.subject,
+            exam: examName,
+            examDate: dateValue,
+            examTime: timeDisplay,
+            location: locationName,
+            building: data.registration.building,
+            room: data.registration.room
+          });
+          window.location.href = 'confirmation (1).html?' + params.toString();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch(err => { console.error(err); alert('Network or server error'); });
+    });
   </script>
 
 </body>

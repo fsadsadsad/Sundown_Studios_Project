@@ -123,12 +123,14 @@ footer{
 
 <h1>Your Exam Has Been Booked</h1>
 
-<div class="row"><span>Name</span><span id="studentName"></span></div>
 <div class="row"><span>Email</span><span id="email"></span></div>
+<div class="row"><span>Subject</span><span id="subject"></span></div>
 <div class="row"><span>Exam</span><span id="exam"></span></div>
 <div class="row"><span>Date</span><span id="examDate"></span></div>
 <div class="row"><span>Time</span><span id="examTime"></span></div>
 <div class="row"><span>Location</span><span id="location"></span></div>
+<div class="row"><span>Building</span><span id="building"></span></div>
+<div class="row"><span>Room</span><span id="room"></span></div>
 
 <div class="notice">
 Please arrive 15 minutes early with a valid ID.
@@ -148,12 +150,18 @@ College of Southern Nevada | Exam Registration System
 
 <script>
 const p=new URLSearchParams(window.location.search);
-document.getElementById("studentName").textContent=p.get("studentName");
-document.getElementById("email").textContent=p.get("email");
+
+const rawEmail = p.get("email") || '';
+const email = rawEmail.replace(/(@student\.csn\.edu)+$/i, '@student.csn.edu');
+
+document.getElementById("email").textContent = email;
+document.getElementById("subject").textContent=p.get("subject");
 document.getElementById("exam").textContent=p.get("exam");
 document.getElementById("examDate").textContent=p.get("examDate");
 document.getElementById("examTime").textContent=p.get("examTime");
 document.getElementById("location").textContent=p.get("location");
+document.getElementById("building").textContent=p.get("building");
+document.getElementById("room").textContent=p.get("room");
 </script>
 
 </body>
