@@ -3,6 +3,124 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
 
+  import smtplib
+  import os
+  from email.mime.multipart import MIMEMultipart
+  from email.mime.text import MIMEText
+
+
+  # ── Email helper ──────────────────────────────────────────────────────────────
+
+  def _pad_id(registration_id):
+      return f"CSN-{str(registration_id).zfill(6)}"
+
+
+  def _format_date(date_str):
+      from datetime import datetime as _dt
+      try:
+          return _dt.strptime(str(date_str), "%Y-%m-%d").strftime("%A, %B %-d, %Y")
+      except Exception:
+          return str(date_str)
+
+
+  def _send_confirmation_email(student_email, registration_id, class_name,
+                                exam_date, exam_time, campus, building, room):
+      """
+      Send a styled HTML confirmation email to the student after registration.
+      Requires GMAIL_ADDRESS and GMAIL_APP_PASSWORD environment variables.
+      """
+      gmail_address = os.environ.get("GMAIL_ADDRESS")
+      gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
+      if not gmail_address or not gmail_password:
+          print("Email credentials not configured — skipping confirmation email.")
+          return
+
+      confirmation_id = _pad_id(registration_id)
+      formatted_date  = _format_date(exam_date)
+      current_year    = __import__('datetime').datetime.now().year
+
+      html_body = f"""
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Exam Registration Confirmed</title>
+    <style>
+      body {{ margin:0; padding:0; background:#f4f7fc; font-family:'Segoe UI',Arial,sans-serif; color:#1a1a2e; }}
+      .wrapper {{ max-width:600px; margin:40px auto; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px rgba(0,61,165,.10); }}
+      .header {{ background:#003DA5; padding:28px 32px; text-align:center; }}
+      .header h1 {{ margin:0; color:#fff; font-size:22px; font-family:Georgia,serif; }}
+      .header p {{ margin:6px 0 0; color:rgba(255,255,255,.80); font-size:14px; }}
+      .card {{ margin:28px 32px; border:1px solid #c8d8ef; border-radius:8px; overflow:hidden; border-top:4px solid #003DA5; }}
+      .card-header {{ background:#f0f5ff; padding:12px 20px; border-bottom:1px solid #c8d8ef; text-align:center; }}
+      .card-header span {{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#003DA5; }}
+      .card-body {{ display:flex; padding:24px 20px; }}
+      .col {{ flex:1; }}
+      .col+.col {{ border-left:1px solid #e8eef8; padding-left:24px; }}
+      .label {{ font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#6b7280; margin-bottom:4px; }}
+      .value {{ font-size:17px; font-weight:600; color:#111827; line-height:1.4; }}
+      .sub {{ font-size:15px; color:#374151; margin-top:2px; }}
+      .block {{ margin-bottom:20px; }}
+      .conf-id {{ font-family:'Courier New',monospace; background:#f3f4f6; border-radius:6px; padding:8px 12px; text-align:center; letter-spacing:4px; font-size:18px; color:#1f2937; font-weight:700; }}
+      .note {{ background:#f9fafb; border-top:1px solid #e5e7eb; padding:18px 32px; text-align:center; font-size:13px; color:#6b7280; line-height:1.6; }}
+      .foot {{ padding:16px 32px 28px; text-align:center; font-size:12px; color:#9ca3af; }}
+    </style>
+  </head>
+  <body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Registration Confirmed</h1>
+      <p>Your exam slot has been successfully booked.</p>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>Official Booking Record</span></div>
+      <div class="card-body">
+        <div class="col">
+          <div class="block"><div class="label">Course</div><div class="value">{class_name}</div></div>
+          <div class="block"><div class="label">Date &amp; Time</div><div class="value">{formatted_date}</div><div class="sub">{exam_time}</div></div>
+        </div>
+        <div class="col">
+          <div class="block"><div class="label">Location</div><div class="value">{campus} Campus</div><div class="sub">{building}</div><div class="sub">Room {room}</div></div>
+          <div class="block"><div class="label">Confirmation ID</div><div class="conf-id">{confirmation_id}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="note">Please arrive at the testing center at least <strong>15 minutes</strong> before your scheduled time.<br/>Bring a valid photo ID.</div>
+    <div class="foot">&copy; {current_year} College of Southern Nevada. All rights reserved.</div>
+  </div>
+  </body>
+  </html>
+  """
+
+      text_body = (
+          f"Registration Confirmed — Official Booking Record\n"
+          f"==============================================\n\n"
+          f"Course:          {class_name}\n"
+          f"Date:            {formatted_date}\n"
+          f"Time:            {exam_time}\n"
+          f"Location:        {campus} Campus\n"
+          f"Building:        {building}\n"
+          f"Room:            {room}\n"
+          f"Confirmation ID: {confirmation_id}\n\n"
+          f"Please arrive at the testing center at least 15 minutes before your scheduled time.\n"
+          f"Bring a valid photo ID.\n\n"
+          f"\u00a9 {current_year} College of Southern Nevada. All rights reserved."
+      )
+
+      msg = MIMEMultipart("alternative")
+      msg["Subject"] = f"Exam Registration Confirmed \u2014 {confirmation_id}"
+      msg["From"]    = f"Confirmation CSN <{gmail_address}>"
+      msg["To"]      = student_email
+      msg.attach(MIMEText(text_body, "plain"))
+      msg.attach(MIMEText(html_body, "html"))
+
+      with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+          server.login(gmail_address, gmail_password)
+          server.sendmail(gmail_address, student_email, msg.as_string())
+
+      print(f"Confirmation email sent to {student_email} ({confirmation_id})")
+
+  
 # ── DB config (shared with userback.py) ──────────────────────────────────────
 db_config = {
     'host': 'localhost',
