@@ -1,9 +1,9 @@
-/* ============================================
+* ============================================
    College of Southern Nevada — Exam Scheduling
    Stylesheet: schedule-styles.css
    Theme: White & CSN Blue — Clean / Standard
    ============================================ */
- 
+ /
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Source+Sans+3:wght@300;400;600&display=swap');
  
 /* ---------- CSS Variables ---------- */
@@ -194,19 +194,22 @@ main {
 }
  
 #logoutbutton {
-  width: 100%;
+  width: 90px;
   padding: 11px 0;
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--csn-blue);
-  background: transparent;
-  border: 1.5px solid var(--csn-blue);
+  color: var(--white);
+  background: var(--cancel-red);
+  border: 1.5px solid var(--white);
   border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
  
 #logoutbutton:hover {
