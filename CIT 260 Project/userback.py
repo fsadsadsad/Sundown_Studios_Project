@@ -5,6 +5,11 @@ from mysql.connector import Error
 import bcrypt
 import os
 import sys
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # loads GMAIL_ADDRESS, GMAIL_APP_PASSWORD, etc. from .env
+except ImportError:
+    pass  # python-dotenv not installed; env vars must be set manually
 
 # Import regiback from current directory
 sys.path.insert(0, os.path.dirname(__file__))
@@ -277,7 +282,17 @@ app.add_url_rule('/api/schedule', 'schedule_exam', regiback.schedule_exam, metho
 app.add_url_rule('/api/schedule', 'get_user_exams', regiback.get_user_exams, methods=['GET'])
 app.add_url_rule('/api/schedule/<int:registration_id>', 'cancel_exam', regiback.cancel_exam, methods=['DELETE'])
 
-if __name__ == '__main__':
+@app.route('/confirmation')
+  def confirmation_page():
+      """Serve the exam confirmation page"""
+      return send_from_directory(os.path.dirname(__file__), 'confirmation (1).html')
+
+  @app.route('/faculty.html')
+  def faculty_page():
+      """Serve the faculty dashboard"""
+      return send_from_directory(os.path.dirname(__file__), 'faculty.html')
+
+  if __name__ == '__main__':
     if init_database():
         app.run(debug=True, port=5000)
     else:
