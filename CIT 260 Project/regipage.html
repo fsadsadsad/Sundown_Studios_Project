@@ -119,9 +119,113 @@
   <footer id="page-footer">
     <span>College of Southern Nevada</span>
   </footer>
- 
+
   <script>
+    const debug = console.log.bind(console);
+
+    // Load and display user's scheduled exams
+    const loadUserExams = () => {
+      debug('=== LOADING USER EXAMS ===');
+      
+      const userId = localStorage.getItem('user_id');
+      const username = localStorage.getItem('username');
+      
+      debug('User credentials', { username, userId });
+
+      if (!userId) {
+        debug('ERROR: No user_id in localStorage');
+        return;
+      }
+
+      // Check DOM elements exist
+      debug('Checking DOM elements...');
+      let slotsFound = 0;
+      for (let i = 1; i <= 3; i++) {
+        if (document.getElementById(`exam-slot-${i}`)) {
+          slotsFound++;
+        }
+      }
+      debug(`Found ${slotsFound}/3 exam slots in DOM`);
+
+      // Build API URL
+      const apiUrl = `http://localhost:5000/api/schedule?user_id=${userId}`;
+      debug('Fetching from API', { url: apiUrl });
+
+      fetch(apiUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => {
+        debug('API Response status', { status: response.status });
+        return response.json();
+      })
+      .then(data => {
+        debug('API Response data', data);
+
+        if (!data.success) {
+          debug('ERROR: API returned success=false', data.message);
+          return;
+        }
+
+        if (!Array.isArray(data.exams)) {
+          debug('ERROR: exams is not an array', { type: typeof data.exams, value: data.exams });
+          return;
+        }
+
+        debug(`API returned ${data.exams.length} exams`);
+
+        // If no exams, keep default text
+        if (data.exams.length === 0) {
+          debug('No exams registered for this user - keeping default display');
+          return;
+        }
+
+        // Clear and populate slots
+        debug('Populating exam slots...');
+        data.exams.forEach((exam, idx) => {
+          if (idx >= 3) return;
+          
+          const slotId = `exam-slot-${idx + 1}`;
+          const slot = document.getElementById(slotId);
+          
+          if (!slot) {
+            debug(`ERROR: ${slotId} not found`);
+            return;
+          }
+
+          const detail = slot.querySelector('.exam-detail');
+          const btn = slot.querySelector('.cancel-btn');
+
+          if (!detail) {
+            debug(`ERROR: No .exam-detail in ${slotId}`);
+            return;
+          }
+
+          const dateStr = new Date(exam.date).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+          });
+
+          const text = `${exam.subject} - ${dateStr} at ${exam.time} (${exam.location})`;
+          detail.textContent = text;
+          
+          if (btn) {
+            btn.disabled = false;
+            btn.dataset.registrationId = exam.id;
+          }
+
+          debug(`Set ${slotId}`, { text });
+        });
+
+        debug('✓ Exam slots populated successfully');
+      })
+      .catch(err => {
+        debug('ERROR: Fetch failed', { error: err.message });
+      });
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
+      debug('=== PAGE LOADED - INITIALIZING ===');
+
       const classSelect = document.getElementById('class');
       const examSelect = document.getElementById('exam-name');
       const locationSelect = document.getElementById('location');
@@ -348,6 +452,56 @@
       timeSelect.addEventListener('change', () => {
         clearError(timeGroup, timeError);
       });
+
+      // ============================================
+      // LOAD USER EXAMS AND SETUP CANCEL LISTENERS
+      // ============================================
+      
+      console.log('Loading user scheduled exams...');
+      loadUserExams();
+
+      // Setup cancel button listeners
+      const setupCancelListeners = () => {
+        document.querySelectorAll('.cancel-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const registrationId = e.target.dataset.registrationId;
+            const userId = localStorage.getItem('user_id');
+
+            debug('Cancel button clicked', { registrationId, userId });
+
+            if (!registrationId || !userId) {
+              alert('Unable to cancel exam: missing information');
+              return;
+            }
+
+            if (!confirm('Are you sure you want to cancel this exam?')) {
+              return;
+            }
+
+            fetch(`http://localhost:5000/api/schedule/${registrationId}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ user_id: userId })
+            })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                debug('✓ Exam cancelled successfully');
+                loadUserExams(); // Reload the exams list
+              } else {
+                alert('Error: ' + data.message);
+              }
+            })
+            .catch(err => {
+              debug('ERROR: Cancel failed', { error: err.message });
+              alert('Network or server error');
+            });
+          });
+        });
+      };
+
+      setupCancelListeners();
     });
 
     document.getElementById('logoutbutton').addEventListener('click', () => {
@@ -433,6 +587,7 @@
       })
       .catch(err => { console.error(err); alert('Network or server error'); });
     });
+
   </script>
 
 </body>
