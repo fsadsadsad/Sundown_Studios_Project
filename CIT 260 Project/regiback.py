@@ -373,6 +373,29 @@ def schedule_exam():
 
         # ── Return the new registration with its details ──────────────────────
         reg_id = cursor.lastrowid
+
+        # ── Send confirmation email (non-blocking) ────────────────────────────
+        try:
+            conn2 = get_db_connection()
+            if conn2:
+                cur2 = conn2.cursor(dictionary=True)
+                cur2.execute("SELECT username FROM user WHERE id=%s", (user_id,))
+                user_row = cur2.fetchone()
+                cur2.close(); conn2.close()
+                if user_row and user_row.get('username'):
+                    _send_confirmation_email(
+                        student_email=user_row['username'],
+                        registration_id=reg_id,
+                        class_name=subject,
+                        exam_date=exam_date,
+                        exam_time=exam_time,
+                        campus=location,
+                        building=building,
+                        room=room
+                    )
+        except Exception as mail_err:
+            print(f"Email send failed (non-fatal): {mail_err}")
+
         cursor.close(); conn.close()
 
         return jsonify({
