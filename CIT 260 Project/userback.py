@@ -283,16 +283,16 @@ app.add_url_rule('/api/schedule', 'get_user_exams', regiback.get_user_exams, met
 app.add_url_rule('/api/schedule/<int:registration_id>', 'cancel_exam', regiback.cancel_exam, methods=['DELETE'])
 
 @app.route('/confirmation')
-  def confirmation_page():
-      """Serve the exam confirmation page"""
-      return send_from_directory(os.path.dirname(__file__), 'confirmation (1).html')
+def confirmation_page():
+    """Serve the exam confirmation page"""
+    return send_from_directory(os.path.dirname(__file__), 'confirmation (1).html')
 
-  @app.route('/faculty.html')
-  def faculty_page():
-      """Serve the faculty dashboard"""
-      return send_from_directory(os.path.dirname(__file__), 'faculty.html')
+@app.route('/faculty.html')
+def faculty_page():
+    """Serve the faculty dashboard"""
+    return send_from_directory(os.path.dirname(__file__), 'faculty.html')
 
-  if __name__ == '__main__':
+if __name__ == '__main__':
     if init_database():
         app.run(debug=True, port=5000)
     else:

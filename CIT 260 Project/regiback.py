@@ -23,12 +23,26 @@ def _format_date(date_str):
         return str(date_str)
 
 
+def _normalize_student_email(student_email):
+    email = (student_email or '').strip()
+    if not email:
+        return None
+    if '@' not in email:
+        email = f"{email}@student.csn.edu"
+    return email
+
+
 def _send_confirmation_email(student_email, registration_id, class_name,
                               exam_date, exam_time, campus, building, room):
     """
     Send a styled HTML confirmation email to the student after registration.
     Requires GMAIL_ADDRESS and GMAIL_APP_PASSWORD environment variables.
     """
+    student_email = _normalize_student_email(student_email)
+    if not student_email:
+        print("No valid student email available — skipping confirmation email.")
+        return
+
     gmail_address = os.environ.get("GMAIL_ADDRESS")
     gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
     if not gmail_address or not gmail_password:
