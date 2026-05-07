@@ -3,8 +3,11 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
 
+load_dotenv()
+
 import smtplib
 import os
+from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
