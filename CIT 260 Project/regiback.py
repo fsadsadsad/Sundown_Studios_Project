@@ -3,7 +3,6 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
 
-load_dotenv()
 
 import smtplib
 import os
