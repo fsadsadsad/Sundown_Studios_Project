@@ -47,6 +47,11 @@ body {
   flex-direction: column;
 }
 
+/* ---------- Utility ---------- */
+.hidden {
+  display: none !important;
+}
+
 /* ---------- Header ---------- */
 #page-header {
   width: 100%;
@@ -89,10 +94,9 @@ main {
   flex-direction: column;
 }
 
-/* ---------- Left panel: enrolled students ---------- */
+/* ---------- Left panel: exam list ---------- */
 #enrolled-list {
   padding: 36px 40px;
-  gap: 0;
 }
 
 #enrolled-heading {
@@ -106,7 +110,7 @@ main {
   flex-shrink: 0;
 }
 
-#student-scroll {
+#exam-scroll {
   flex: 1;
   overflow-y: auto;
   padding: 16px 0;
@@ -117,24 +121,22 @@ main {
   max-height: 440px;
 }
 
-/* Subtle scrollbar styling */
-#student-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-#student-scroll::-webkit-scrollbar-track {
-  background: var(--off-white);
-  border-radius: 4px;
-}
-#student-scroll::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-#student-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--csn-accent);
+#exam-scroll::-webkit-scrollbar { width: 6px; }
+#exam-scroll::-webkit-scrollbar-track { background: var(--off-white); border-radius: 4px; }
+#exam-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+#exam-scroll::-webkit-scrollbar-thumb:hover { background: var(--csn-accent); }
+
+/* ---------- Empty state message ---------- */
+.empty-msg {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
 }
 
-/* ---------- Individual Student Entry ---------- */
-.student-entry {
+/* ---------- Individual Exam Entry (left panel) ---------- */
+.exam-entry {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -146,13 +148,13 @@ main {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.student-entry:hover {
+.exam-entry:hover {
   border-color: var(--csn-blue);
   box-shadow: 0 2px 10px rgba(0, 61, 165, 0.08);
   background: var(--white);
 }
 
-.student-info {
+.exam-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -160,7 +162,7 @@ main {
   min-width: 0;
 }
 
-.student-name {
+.exam-name {
   font-size: 0.97rem;
   font-weight: 600;
   color: var(--csn-blue);
@@ -169,7 +171,7 @@ main {
   text-overflow: ellipsis;
 }
 
-.student-detail {
+.exam-detail {
   font-size: 0.8rem;
   color: var(--text-muted);
   white-space: nowrap;
@@ -177,11 +179,46 @@ main {
   text-overflow: ellipsis;
 }
 
-/* ---------- Kick-out Button ---------- */
-.kick-btn {
+.exam-enrollment {
+  font-size: 0.75rem;
+  color: var(--csn-accent);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ---------- View Students Button ---------- */
+.view-btn {
   flex-shrink: 0;
   align-self: center;
   padding: 7px 13px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--csn-blue);
+  background: transparent;
+  border: 1.5px solid var(--csn-blue);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+}
+
+.view-btn:hover {
+  background: var(--csn-blue);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.view-btn:active {
+  transform: translateY(0);
+}
+
+/* ---------- Kick-out (Remove) Button ---------- */
+.kick-btn {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 6px 12px;
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
@@ -204,7 +241,7 @@ main {
   transform: translateY(0);
 }
 
-/* ---------- Logout Button (bottom of left panel) ---------- */
+/* ---------- Logout Button ---------- */
 #logout-wrapper {
   flex-shrink: 0;
   margin-top: 16px;
@@ -240,7 +277,7 @@ main {
   box-shadow: 0 2px 8px rgba(192, 57, 43, 0.2);
 }
 
-/* ---------- Right panel: add-student form ---------- */
+/* ---------- Right panel: add exam form ---------- */
 #add-form-card {
   padding: 44px 48px;
   gap: 22px;
@@ -310,7 +347,6 @@ input[readonly] {
   background: var(--light-gray);
   color: var(--text-muted);
   cursor: not-allowed;
-  border-color: var(--border-color);
 }
 
 input[readonly]:focus {
@@ -351,7 +387,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.10);
 }
 
-/* ---------- Add Button ---------- */
+/* ---------- Add Exam Button ---------- */
 #addbutton {
   width: 100%;
   margin-top: 4px;
@@ -379,6 +415,214 @@ select:focus {
 #addbutton:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 61, 165, 0.18);
+}
+
+/* ============================================================
+   Modal Overlay
+   ============================================================ */
+
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#modal-box {
+  background: var(--white);
+  border-radius: 16px;
+  border-top: 4px solid var(--csn-blue);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
+  width: 100%;
+  max-width: 520px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- Modal header ---------- */
+#modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 28px 16px;
+  border-bottom: 1.5px solid var(--light-gray);
+  flex-shrink: 0;
+}
+
+#modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--csn-blue);
+  letter-spacing: 0.02em;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#modal-add-btn {
+  padding: 7px 14px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--csn-blue);
+  background: transparent;
+  border: 1.5px solid var(--csn-blue);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+#modal-add-btn:hover {
+  background: var(--csn-blue);
+  color: var(--white);
+}
+
+#modal-close-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+#modal-close-btn:hover {
+  background: var(--light-gray);
+  color: var(--text-dark);
+}
+
+/* ---------- Modal body ---------- */
+#modal-list-view,
+#modal-add-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- Student scroll inside modal ---------- */
+#modal-student-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#modal-student-scroll::-webkit-scrollbar { width: 6px; }
+#modal-student-scroll::-webkit-scrollbar-track { background: var(--off-white); border-radius: 4px; }
+#modal-student-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+#modal-student-scroll::-webkit-scrollbar-thumb:hover { background: var(--csn-accent); }
+
+/* ---------- Modal student entry ---------- */
+.modal-student-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--off-white);
+  transition: border-color 0.2s ease;
+}
+
+.modal-student-entry:hover {
+  border-color: var(--csn-blue);
+  background: var(--white);
+}
+
+.modal-student-email {
+  font-size: 0.9rem;
+  color: var(--text-dark);
+  font-weight: 400;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Modal add-student form view ---------- */
+#modal-add-form {
+  padding: 20px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+#modal-back-btn {
+  align-self: flex-start;
+  padding: 0;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--csn-accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+#modal-back-btn:hover {
+  color: var(--csn-blue);
+}
+
+#modal-confirm-add {
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(90deg, var(--csn-blue) 0%, var(--csn-blue-light) 100%);
+  color: var(--white);
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: 0 3px 14px rgba(0, 61, 165, 0.22);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+#modal-confirm-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0, 61, 165, 0.30);
+  background: linear-gradient(90deg, var(--csn-blue-dark) 0%, var(--csn-blue) 100%);
+}
+
+#modal-confirm-add:active {
+  transform: translateY(0);
 }
 
 /* ---------- Footer ---------- */
@@ -413,7 +657,7 @@ select:focus {
     width: 100%;
   }
 
-  #student-scroll {
+  #exam-scroll {
     max-height: 320px;
   }
 }
@@ -425,4 +669,8 @@ select:focus {
   #enrolled-list { padding: 28px 24px; }
   .form-row { flex-direction: column; gap: 22px; }
   #page-footer { padding: 14px 24px; }
+  #modal-box { max-height: 90vh; }
+  #modal-header { padding: 16px 20px 14px; }
+  #modal-student-scroll { padding: 14px 20px; }
+  #modal-add-form { padding: 16px 20px 20px; }
 }
