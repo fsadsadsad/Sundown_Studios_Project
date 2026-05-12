@@ -53,6 +53,13 @@ body {
   box-shadow: 0 2px 12px rgba(0, 61, 165, 0.18);
 }
  
+#page-header .header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 #title {
   font-family: 'Playfair Display', serif;
   font-size: 1.6rem;
@@ -60,6 +67,19 @@ body {
   color: var(--white);
   letter-spacing: 0.02em;
   text-align: left;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.current-username {
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
  
 /* ---------- Main: side-by-side layout ---------- */
@@ -194,8 +214,7 @@ main {
 }
  
 #logoutbutton {
-  width: 90px;
-  padding: 11px 0;
+  padding: 11px 18px;
   font-family: 'Source Sans 3', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
@@ -207,9 +226,6 @@ main {
   border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
-  position: absolute;
-  top: 10px;
-  right: 10px;
 }
  
 #logoutbutton:hover {

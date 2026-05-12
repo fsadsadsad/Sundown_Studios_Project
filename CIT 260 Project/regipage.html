@@ -11,7 +11,13 @@
  
   <!-- Top blue header bar -->
   <header id="page-header">
-    <h1 id="title">Please Schedule Your Exam</h1>
+    <div class="header-top">
+      <h1 id="title">Please Schedule Your Exam</h1>
+      <div class="header-actions">
+        <span id="current-username" class="current-username">Logged in as: Guest</span>
+        <button type="button" id="logoutbutton">Log Out</button>
+      </div>
+    </div>
   </header>
  
   <main>
@@ -108,9 +114,6 @@
  
     </div>
     
-     <div id="logout-row">
-        <button type="button" id="logoutbutton">Log Out</button>
-    </div>
     
     <!-- END scheduled-exams -->
  
@@ -131,6 +134,11 @@
       const username = localStorage.getItem('username');
       
       debug('User credentials', { username, userId });
+
+      const userLabel = document.getElementById('current-username');
+      if (userLabel) {
+        userLabel.textContent = username ? `Logged in as: ${username}` : 'Logged in as: Guest';
+      }
 
       if (!userId) {
         debug('ERROR: No user_id in localStorage');
@@ -193,11 +201,12 @@
             return;
           }
 
+          const label = slot.querySelector('.exam-label');
           const detail = slot.querySelector('.exam-detail');
           const btn = slot.querySelector('.cancel-btn');
 
-          if (!detail) {
-            debug(`ERROR: No .exam-detail in ${slotId}`);
+          if (!label || !detail) {
+            debug(`ERROR: Missing label or detail in ${slotId}`);
             return;
           }
 
@@ -205,6 +214,7 @@
             year: 'numeric', month: 'long', day: 'numeric'
           });
 
+          label.textContent = exam.exam_name || exam.subject || `Exam ${idx + 1}`;
           const text = `${exam.subject} - ${dateStr} at ${exam.time} (${exam.location})`;
           detail.textContent = text;
           
@@ -391,10 +401,18 @@
                   const option = document.createElement('option');
                   option.value = item.SchedulesID;
                   option.dataset.date = item.exam_date;
-                  const dateObj = new Date(item.exam_date + 'T00:00:00');
-                  option.textContent = dateObj.toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                  });
+                  const rawDate = String(item.exam_date || '');
+                  let dateText = rawDate;
+                  const isoMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
+                  if (isoMatch) {
+                    dateText = isoMatch[1];
+                  } else {
+                    const parsedDate = new Date(rawDate);
+                    if (!isNaN(parsedDate)) {
+                      dateText = parsedDate.toISOString().slice(0, 10);
+                    }
+                  }
+                  option.textContent = dateText;
                   dateSelect.appendChild(option);
                 });
                 dateSelect.disabled = false;

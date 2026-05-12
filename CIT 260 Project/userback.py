@@ -5,11 +5,32 @@ from mysql.connector import Error
 import bcrypt
 import os
 import sys
+
+def _load_dotenv_fallback(dotenv_path):
+    if not os.path.exists(dotenv_path):
+        return
+    with open(dotenv_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
 try:
     from dotenv import load_dotenv
-    load_dotenv()  # loads GMAIL_ADDRESS, GMAIL_APP_PASSWORD, etc. from .env
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    if not os.path.exists(dotenv_path):
+        print(f'.env file not found at {dotenv_path}')
+    load_dotenv(dotenv_path=dotenv_path)
+    _load_dotenv_fallback(dotenv_path)
 except ImportError:
-    pass  # python-dotenv not installed; env vars must be set manually
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    _load_dotenv_fallback(dotenv_path)
+    print('python-dotenv not installed; loaded .env using fallback parser.')
 
 # Import regiback from current directory
 sys.path.insert(0, os.path.dirname(__file__))

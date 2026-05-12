@@ -6,7 +6,31 @@ from datetime import datetime, timedelta
 
 import smtplib
 import os
-from dotenv import load_dotenv
+
+def _load_dotenv_fallback(dotenv_path):
+    if not os.path.exists(dotenv_path):
+        return
+    with open(dotenv_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+try:
+    from dotenv import load_dotenv
+    if not os.path.exists(dotenv_path):
+        print(f'.env file not found at {dotenv_path}')
+    load_dotenv(dotenv_path=dotenv_path)
+    _load_dotenv_fallback(dotenv_path)
+except ImportError:
+    _load_dotenv_fallback(dotenv_path)
+    print('python-dotenv not installed; loaded .env using fallback parser.')
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -49,8 +73,10 @@ def _send_confirmation_email(student_email, registration_id, class_name,
     gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
     if not gmail_address or not gmail_password:
         print("Email credentials not configured — skipping confirmation email.")
+        print(f"GMAIL_ADDRESS set: {bool(gmail_address)}; GMAIL_APP_PASSWORD set: {bool(gmail_password)}")
         return
 
+    print(f"Sending confirmation email to {student_email} using {gmail_address}")
     confirmation_id = _pad_id(registration_id)
     formatted_date  = _format_date(exam_date)
     current_year    = __import__('datetime').datetime.now().year
@@ -130,11 +156,16 @@ def _send_confirmation_email(student_email, registration_id, class_name,
     msg.attach(MIMEText(text_body, "plain"))
     msg.attach(MIMEText(html_body, "html"))
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(gmail_address, gmail_password)
-        server.sendmail(gmail_address, student_email, msg.as_string())
-
-    print(f"Confirmation email sent to {student_email} ({confirmation_id})")
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(gmail_address, gmail_password)
+            server.sendmail(gmail_address, student_email, msg.as_string())
+        print(f"Confirmation email sent to {student_email} ({confirmation_id})")
+    except Exception as e:
+        print(f"Failed to send confirmation email: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
   
 # ── DB config (shared with userback.py) ──────────────────────────────────────
@@ -453,6 +484,7 @@ def get_user_exams():
         cursor.execute(
             """SELECT r.RegistrationsID AS id,
                       e.ExamID          AS exam_id,
+                      e.ExamName        AS exam_name,
                       c.ClassName       AS subject,
                       s.exam_date       AS date,
                       s.exam_time       AS time,
@@ -490,15 +522,15 @@ def get_user_exams():
         return jsonify({'success': False, 'message': 'An unexpected server error occurred.'}), 500
 
 
-def cancel_exam():
+def cancel_exam(registration_id=None):
     """
     DELETE /api/schedule/<registration_id>
     Remove a registration, verifying it belongs to the requesting user.
     """
     try:
-        data    = request.get_json()
-        user_id = data.get('user_id')
-        reg_id  = request.view_args.get('registration_id')
+        data    = request.get_json(silent=True) or {}
+        user_id = data.get('user_id') or request.args.get('user_id')
+        reg_id  = registration_id or request.view_args.get('registration_id')
 
         if not user_id or not reg_id:
             return jsonify({'success': False, 'message': 'user_id and registration_id are required.'}), 400
