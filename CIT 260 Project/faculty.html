@@ -15,69 +15,15 @@
 
   <main>
 
-    <!-- LEFT: Enrolled students list + logout -->
+    <!-- LEFT: Exam list + logout -->
     <div id="enrolled-list">
 
-      <h2 id="enrolled-heading">Enrolled Students</h2>
+      <h2 id="enrolled-heading">Exam List</h2>
 
-      <!-- Scrollable list of students currently in exam list -->
-      <div id="student-scroll">
-
-        <!-- Entries are populated here by the backend / JS.
-             Sample entries below show the intended structure. -->
-
-        <div class="student-entry" id="entry-1">
-          <div class="student-info">
-            <span class="student-name">Jane Doe</span>
-            <span class="student-detail">Time: 9:00 AM &nbsp;|&nbsp; Date: 2026-05-10</span>
-            <span class="student-detail">Location: Henderson Campus</span>
-            <span class="student-detail">Building: A &nbsp;|&nbsp; Room: 101</span>
-          </div>
-          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Jane Doe')">Remove</button>
-        </div>
-
-        <div class="student-entry" id="entry-2">
-          <div class="student-info">
-            <span class="student-name">John Smith</span>
-            <span class="student-detail">Time: 10:30 AM &nbsp;|&nbsp; Date: 2026-05-10</span>
-            <span class="student-detail">Location: Charleston Campus</span>
-            <span class="student-detail">Building: B &nbsp;|&nbsp; Room: 204</span>
-          </div>
-          <button type="button" class="kick-btn" onclick="kickStudent(this, 'John Smith')">Remove</button>
-        </div>
-
-        <div class="student-entry" id="entry-3">
-          <div class="student-info">
-            <span class="student-name">Maria Garcia</span>
-            <span class="student-detail">Time: 1:00 PM &nbsp;|&nbsp; Date: 2026-05-11</span>
-            <span class="student-detail">Location: North Las Vegas Campus</span>
-            <span class="student-detail">Building: C &nbsp;|&nbsp; Room: 312</span>
-          </div>
-          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Maria Garcia')">Remove</button>
-        </div>
-
-        <div class="student-entry" id="entry-4">
-          <div class="student-info">
-            <span class="student-name">David Lee</span>
-            <span class="student-detail">Time: 2:30 PM &nbsp;|&nbsp; Date: 2026-05-11</span>
-            <span class="student-detail">Location: Henderson Campus</span>
-            <span class="student-detail">Building: A &nbsp;|&nbsp; Room: 108</span>
-          </div>
-          <button type="button" class="kick-btn" onclick="kickStudent(this, 'David Lee')">Remove</button>
-        </div>
-
-        <div class="student-entry" id="entry-5">
-          <div class="student-info">
-            <span class="student-name">Sarah Johnson</span>
-            <span class="student-detail">Time: 8:00 AM &nbsp;|&nbsp; Date: 2026-05-12</span>
-            <span class="student-detail">Location: Charleston Campus</span>
-            <span class="student-detail">Building: D &nbsp;|&nbsp; Room: 415</span>
-          </div>
-          <button type="button" class="kick-btn" onclick="kickStudent(this, 'Sarah Johnson')">Remove</button>
-        </div>
-
+      <!-- Scrollable list of exams — populated by JS on page load -->
+      <div id="exam-scroll">
+        <p id="no-exams-msg" class="empty-msg">No exams found. Add one using the form on the right.</p>
       </div>
-      <!-- END #student-scroll -->
 
       <!-- Red logout button pinned to bottom of left panel -->
       <div id="logout-wrapper">
@@ -87,24 +33,16 @@
     </div>
     <!-- END #enrolled-list -->
 
-    <!-- RIGHT: Add / edit student form -->
+    <!-- RIGHT: Add Exam form -->
     <div id="add-form-card">
 
-      <h2 id="form-heading">Add Student to Exam</h2>
+      <h2 id="form-heading">Add Exam to List</h2>
 
-      <!-- Student dropdown -->
+      <!-- Subject dropdown (populated from DB) -->
       <div class="form-group">
-        <label for="student-select">Student</label>
-        <select id="student-select" name="student" onchange="populateStudentDetails(this.value)">
-          <option value="" disabled selected>— Select a student —</option>
-          <option value="jane_doe">Jane Doe</option>
-          <option value="john_smith">John Smith</option>
-          <option value="maria_garcia">Maria Garcia</option>
-          <option value="david_lee">David Lee</option>
-          <option value="sarah_johnson">Sarah Johnson</option>
-          <option value="carlos_martinez">Carlos Martinez</option>
-          <option value="emily_chen">Emily Chen</option>
-          <option value="michael_brown">Michael Brown</option>
+        <label for="subject-select">Subject</label>
+        <select id="subject-select" onchange="onSubjectChange(this.value)">
+          <option value="" disabled selected>— Select a subject —</option>
         </select>
       </div>
 
@@ -124,8 +62,7 @@
       <div class="form-group">
         <label for="exam-location">Location</label>
         <input type="text" id="exam-location" name="location"
-               placeholder="e.g. North Las Vegas Campus"
-               readonly />
+               placeholder="Select a subject above" readonly />
       </div>
 
       <!-- Building and room (auto-populated, readonly) -->
@@ -133,20 +70,18 @@
         <div class="form-group">
           <label for="exam-building">Building</label>
           <input type="text" id="exam-building" name="building"
-                 placeholder="e.g. Building A"
-                 readonly />
+                 placeholder="Auto-populated" readonly />
         </div>
         <div class="form-group">
           <label for="exam-room">Room Number</label>
           <input type="text" id="exam-room" name="room"
-                 placeholder="e.g. Room 101"
-                 readonly />
+                 placeholder="Auto-populated" readonly />
         </div>
       </div>
 
       <!-- Submit -->
       <div class="form-group">
-        <button type="button" id="addbutton" onclick="addStudent()">Add to Exam List</button>
+        <button type="button" id="addbutton" onclick="submitAddExam()">Add Exam to List</button>
       </div>
 
     </div>
@@ -158,46 +93,352 @@
     <span>College of Southern Nevada</span>
   </footer>
 
+  <!-- ================================================================
+       Modal: Student list for a selected exam
+       ================================================================ -->
+  <div id="modal-overlay" class="hidden" onclick="handleOverlayClick(event)">
+    <div id="modal-box">
+
+      <!-- Modal header: title + action buttons -->
+      <div id="modal-header">
+        <h3 id="modal-title">Students</h3>
+        <div id="modal-header-actions">
+          <button type="button" id="modal-add-btn" onclick="showAddStudentView()">+ Add Student</button>
+          <button type="button" id="modal-close-btn" onclick="closeModal()">&#x2715;</button>
+        </div>
+      </div>
+
+      <!-- View 1: Student list -->
+      <div id="modal-list-view">
+        <div id="modal-student-scroll">
+          <p id="no-students-msg" class="empty-msg">No students enrolled in this exam.</p>
+        </div>
+      </div>
+
+      <!-- View 2: Add student form (hidden until "+ Add Student" is clicked) -->
+      <div id="modal-add-view" class="hidden">
+        <div id="modal-add-form">
+          <button type="button" id="modal-back-btn" onclick="showStudentListView()">&#8592; Back to Students</button>
+          <div class="form-group">
+            <label for="modal-student-select">Student</label>
+            <select id="modal-student-select">
+              <option value="" disabled selected>— Select a student —</option>
+            </select>
+          </div>
+          <button type="button" id="modal-confirm-add" onclick="submitAddStudent()">Add to Exam</button>
+        </div>
+      </div>
+
+    </div>
+    <!-- END #modal-box -->
+  </div>
+
   <script>
-    // Sample student → location mapping.
-    // TODO: replace with a real API call once the backend is wired up.
-    const studentData = {
-      jane_doe:       { location: 'Henderson Campus',       building: 'A', room: '101' },
-      john_smith:     { location: 'Charleston Campus',      building: 'B', room: '204' },
-      maria_garcia:   { location: 'North Las Vegas Campus', building: 'C', room: '312' },
-      david_lee:      { location: 'Henderson Campus',       building: 'A', room: '108' },
-      sarah_johnson:  { location: 'Charleston Campus',      building: 'D', room: '415' },
-      carlos_martinez:{ location: 'North Las Vegas Campus', building: 'C', room: '305' },
-      emily_chen:     { location: 'Henderson Campus',       building: 'B', room: '210' },
-      michael_brown:  { location: 'Charleston Campus',      building: 'A', room: '112' },
-    };
+    const API_BASE = 'http://localhost:5001';
+    let currentExamId = null;
 
-    function populateStudentDetails(value) {
-      const data = studentData[value];
-      document.getElementById('exam-location').value = data ? data.location : '';
-      document.getElementById('exam-building').value = data ? data.building : '';
-      document.getElementById('exam-room').value      = data ? data.room      : '';
-    }
+    // ── Page load ─────────────────────────────────────────────────────────────
 
-    function kickStudent(btn, name) {
-      const confirmed = confirm(
-        'Remove ' + name + ' from the exam list?\n\nThis action cannot be undone.'
-      );
-      if (confirmed) {
-        const entry = btn.closest('.student-entry');
-        if (entry) entry.remove();
-        // TODO: POST /api/faculty/remove { student: name } → refresh list from backend
+    document.addEventListener('DOMContentLoaded', async () => {
+      await Promise.all([loadExams(), loadSubjects()]);
+    });
+
+    // ── Left panel: exam list ─────────────────────────────────────────────────
+
+    async function loadExams() {
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/exams`);
+        const data = await res.json();
+        if (data.success) renderExams(data.exams);
+      } catch (e) {
+        console.error('Could not load exams:', e);
       }
     }
 
-    function addStudent() {
-      // TODO: POST /api/faculty/add → refresh enrolled list from backend
-      alert('Student added to exam list.\n(Backend integration pending.)');
+    function renderExams(exams) {
+      const scroll = document.getElementById('exam-scroll');
+      const noMsg  = document.getElementById('no-exams-msg');
+
+      scroll.querySelectorAll('.exam-entry').forEach(el => el.remove());
+
+      if (!exams || exams.length === 0) {
+        noMsg.classList.remove('hidden');
+        return;
+      }
+      noMsg.classList.add('hidden');
+
+      exams.forEach(ex => {
+        const timeStr = formatTime(ex.time);
+        const dateStr = formatDate(ex.date);
+        const locParts = [
+          ex.location || '',
+          ex.building ? `Bldg ${ex.building}` : '',
+          ex.room     ? `Room ${ex.room}`     : ''
+        ].filter(Boolean);
+        const locStr = locParts.join(' · ');
+        const count  = ex.enrollment ?? 0;
+
+        const entry = document.createElement('div');
+        entry.className = 'exam-entry';
+        entry.dataset.examId = ex.ExamID;
+        entry.innerHTML = `
+          <div class="exam-info">
+            <span class="exam-name">${escHtml(ex.subject)} Exam</span>
+            <span class="exam-detail">${escHtml(dateStr)} at ${escHtml(timeStr)}</span>
+            ${locStr ? `<span class="exam-detail">${escHtml(locStr)}</span>` : ''}
+            <span class="exam-detail exam-enrollment">${count} student${count !== 1 ? 's' : ''} enrolled</span>
+          </div>
+          <button type="button" class="view-btn"
+                  data-exam-id="${ex.ExamID}"
+                  data-subject="${escAttr(ex.subject)}">
+            View Students
+          </button>
+        `;
+        entry.querySelector('.view-btn').addEventListener('click', () => {
+          openModal(ex.ExamID, ex.subject);
+        });
+        scroll.appendChild(entry);
+      });
     }
 
-    function handleLogout() {
-      // TODO: POST /api/logout → redirect to login page
+    // ── Right panel: add exam ─────────────────────────────────────────────────
+
+    async function loadSubjects() {
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/subjects`);
+        const data = await res.json();
+        if (!data.success) return;
+        const sel = document.getElementById('subject-select');
+        data.subjects.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value       = s.ClassID;
+          opt.textContent = s.ClassName;
+          opt.dataset.name = s.ClassName;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Could not load subjects:', e);
+      }
+    }
+
+    async function onSubjectChange(classId) {
+      if (!classId) return;
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/subjects/${classId}/location`);
+        const data = await res.json();
+        const loc  = data.success && data.location ? data.location : null;
+        document.getElementById('exam-location').value = loc ? (loc.location || '') : '';
+        document.getElementById('exam-building').value = loc ? (loc.building || '') : '';
+        document.getElementById('exam-room').value     = loc ? (loc.room     || '') : '';
+      } catch (e) {
+        console.error('Could not load location for subject:', e);
+      }
+    }
+
+    async function submitAddExam() {
+      const sel        = document.getElementById('subject-select');
+      const classId    = sel.value;
+      const subjectName = sel.options[sel.selectedIndex]?.dataset.name || sel.options[sel.selectedIndex]?.text || '';
+      const time       = document.getElementById('exam-time').value;
+      const date       = document.getElementById('exam-date').value;
+      const location   = document.getElementById('exam-location').value.trim();
+      const building   = document.getElementById('exam-building').value.trim();
+      const room       = document.getElementById('exam-room').value.trim();
+
+      if (!classId || !time || !date) {
+        alert('Please select a subject and fill in the time and date.');
+        return;
+      }
+
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/exams`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ subject: subjectName, date, time, location, building, room })
+        });
+        const data = await res.json();
+        if (data.success) {
+          sel.selectedIndex = 0;
+          document.getElementById('exam-time').value     = '';
+          document.getElementById('exam-date').value     = '';
+          document.getElementById('exam-location').value = '';
+          document.getElementById('exam-building').value = '';
+          document.getElementById('exam-room').value     = '';
+          await loadExams();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (e) {
+        alert('Failed to add exam. Is the server running on port 5001?');
+        console.error(e);
+      }
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────────────
+
+    async function openModal(examId, subjectName) {
+      currentExamId = examId;
+      document.getElementById('modal-title').textContent = `Students — ${subjectName} Exam`;
+      showStudentListView();
+      document.getElementById('modal-overlay').classList.remove('hidden');
+      await Promise.all([loadModalStudents(examId), loadUsers()]);
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+      currentExamId = null;
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    function showAddStudentView() {
+      document.getElementById('modal-list-view').classList.add('hidden');
+      document.getElementById('modal-add-view').classList.remove('hidden');
+    }
+
+    function showStudentListView() {
+      document.getElementById('modal-add-view').classList.add('hidden');
+      document.getElementById('modal-list-view').classList.remove('hidden');
+    }
+
+    async function loadModalStudents(examId) {
+      const scroll = document.getElementById('modal-student-scroll');
+      const noMsg  = document.getElementById('no-students-msg');
+      scroll.querySelectorAll('.modal-student-entry').forEach(el => el.remove());
+
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/exams/${examId}/students`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        if (data.students.length === 0) {
+          noMsg.classList.remove('hidden');
+          return;
+        }
+        noMsg.classList.add('hidden');
+
+        data.students.forEach(s => {
+          const entry = document.createElement('div');
+          entry.className = 'modal-student-entry';
+          entry.dataset.userId = s.user_id;
+          entry.innerHTML = `
+            <span class="modal-student-email">${escHtml(s.email)}</span>
+            <button type="button" class="kick-btn">Remove</button>
+          `;
+          entry.querySelector('.kick-btn').addEventListener('click', () => {
+            removeStudent(s.user_id, s.email);
+          });
+          scroll.appendChild(entry);
+        });
+      } catch (e) {
+        console.error('Could not load students:', e);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/users`);
+        const data = await res.json();
+        if (!data.success) return;
+        const sel = document.getElementById('modal-student-select');
+        while (sel.options.length > 1) sel.remove(1);
+        data.users.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value       = u.id;
+          opt.textContent = u.email;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Could not load users:', e);
+      }
+    }
+
+    async function removeStudent(userId, email) {
+      if (!confirm(`Remove ${email} from this exam?\n\nThis action cannot be undone.`)) return;
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/exams/${currentExamId}/students/${userId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          const entry = document.querySelector(`.modal-student-entry[data-user-id="${userId}"]`);
+          if (entry) entry.remove();
+          if (!document.querySelector('.modal-student-entry')) {
+            document.getElementById('no-students-msg').classList.remove('hidden');
+          }
+          await loadExams();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (e) {
+        alert('Failed to remove student. Is the server running on port 5001?');
+        console.error(e);
+      }
+    }
+
+    async function submitAddStudent() {
+      const sel    = document.getElementById('modal-student-select');
+      const userId = sel.value;
+      if (!userId) {
+        alert('Please select a student.');
+        return;
+      }
+      try {
+        const res  = await fetch(`${API_BASE}/api/faculty/exams/${currentExamId}/students`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ user_id: parseInt(userId, 10) })
+        });
+        const data = await res.json();
+        if (data.success) {
+          sel.selectedIndex = 0;
+          showStudentListView();
+          await loadModalStudents(currentExamId);
+          await loadExams();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (e) {
+        alert('Failed to add student. Is the server running on port 5001?');
+        console.error(e);
+      }
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    async function handleLogout() {
+      try {
+        await fetch(`${API_BASE}/api/faculty/logout`, { method: 'POST' });
+      } catch (e) { /* ignore network errors on logout */ }
       window.location.href = 'login.html';
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+
+    function formatTime(t) {
+      if (!t) return '';
+      const [h, m] = t.split(':');
+      const hour = parseInt(h, 10);
+      return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`;
+    }
+
+    function formatDate(d) {
+      if (!d) return '';
+      const [y, mo, day] = d.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${months[parseInt(mo, 10) - 1]} ${parseInt(day, 10)}, ${y}`;
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function escAttr(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
   </script>
 
