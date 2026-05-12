@@ -103,3 +103,24 @@ VALUES ('55555@student.csn.edu', '$2b$12$ggZJJTTwPRMwJRVjjqTs5OddQxtlNPNenJ8g4Ud
 
 INSERT INTO user (username, password_hash)
 VALUES ('44444@student.csn.edu', '$2b$12$wwywXbV9glOwpPLEyGlHMe5MTR2jC4MCNdfJlexmmMCwT/MBzg1AW');
+
+-- test exams
+INSERT INTO class (ClassID, ClassName) 
+VALUES 
+(1, 'CIT 260'),
+(2, 'CS 202');
+
+INSERT INTO Location (LocationID, Campus, Building, Room) 
+VALUES 
+(1, 'Charleston', 'Building A', 'Room 101'),
+(2, 'North Las Vegas', 'Building B', 'Room 205');
+
+INSERT INTO Schedules (SchedulesID, exam_date, exam_time) 
+VALUES 
+(1, '2026-05-15', '10:00:00'),
+(2, '2026-05-20', '14:30:00');
+
+INSERT INTO Exam (ExamID, ClassID, LocationID, SchedulesID, ExamName) 
+VALUES 
+(1, 1, 1, 1, 'Midterm Exam'),
+(2, 2, 2, 2, 'Final');
