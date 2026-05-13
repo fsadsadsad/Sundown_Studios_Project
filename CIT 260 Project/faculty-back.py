@@ -35,6 +35,31 @@ def _time_str(t):
         return f'{h:02d}:{rem // 60:02d}'
     return str(t)[:5]
 
+
+def _group_exam_rows(rows):
+    grouped = {}
+    for row in rows:
+        key = (row['ExamName'], row['subject'], row['location'], row['building'], row['room'], str(row['date']), _time_str(row['time']))
+        if key not in grouped:
+            grouped[key] = {
+                'ExamID': row['ExamID'],
+                'subject': row['subject'],
+                'ExamName': row['ExamName'],
+                'location': row['location'],
+                'building': row['building'],
+                'room': row['room'],
+                'enrollment': 0,
+                'schedules': []
+            }
+        group = grouped[key]
+        group['enrollment'] += row.get('enrollment', 0) or 0
+        group['schedules'].append({
+            'ExamID': row['ExamID'],
+            'date': str(row['date']),
+            'time': _time_str(row['time'])
+        })
+    return list(grouped.values())
+
 # ── Serve the faculty page ────────────────────────────────────────────────────
 
 @app.route('/')
@@ -68,22 +93,24 @@ def get_exams():
         JOIN Schedules s ON e.SchedulesID  = s.SchedulesID
         LEFT JOIN Registrations r ON e.ExamID = r.ExamID
         GROUP BY e.ExamID
-        ORDER BY s.exam_date, s.exam_time
+        ORDER BY e.ExamName, s.exam_date, s.exam_time
     """)
     exams = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    for ex in exams:
-        ex['date'] = str(ex['date'])
-        ex['time'] = _time_str(ex['time'])
-
-    return jsonify({'success': True, 'exams': exams}), 200
+    grouped_exams = _group_exam_rows(exams)
+    return jsonify({'success': True, 'exams': grouped_exams}), 200
 
 
 @app.route('/api/faculty/exams', methods=['POST'])
 def add_exam():
-    """Create a new exam entry (and its supporting class/location/schedule rows)."""
+    """Create a new exam entry or add a new schedule to an existing exam.
+    
+    If an exam with the same name, subject, and location already exists,
+    a new schedule (date/time) is added without duplicating the exam details.
+    Otherwise, a new exam is created with its supporting rows.
+    """
     data      = request.get_json() or {}
     exam_name = data.get('exam_name', '').strip()
     subject   = data.get('subject', '').strip()
@@ -125,26 +152,72 @@ def add_exam():
         )
         location_id = cursor.lastrowid
 
-    # Get or create schedule
+    # Check if an exam with the same name, subject, and location already exists
     cursor.execute(
-        'SELECT SchedulesID FROM Schedules WHERE exam_date=%s AND exam_time=%s',
-        (exam_date, exam_time)
+        'SELECT ExamID FROM Exam WHERE ExamName=%s AND ClassID=%s AND LocationID=%s',
+        (exam_name, class_id, location_id)
     )
-    row = cursor.fetchone()
-    schedule_id = row[0] if row else None
-    if schedule_id is None:
+    existing_exam = cursor.fetchone()
+
+    if existing_exam:
+        # Exam already exists, just add a new schedule and create a new exam entry for this schedule
+        # Get or create schedule
         cursor.execute(
-            'INSERT INTO Schedules (exam_date, exam_time) VALUES (%s, %s)',
+            'SELECT SchedulesID FROM Schedules WHERE exam_date=%s AND exam_time=%s',
             (exam_date, exam_time)
         )
-        schedule_id = cursor.lastrowid
+        row = cursor.fetchone()
+        schedule_id = row[0] if row else None
+        if schedule_id is None:
+            cursor.execute(
+                'INSERT INTO Schedules (exam_date, exam_time) VALUES (%s, %s)',
+                (exam_date, exam_time)
+            )
+            schedule_id = cursor.lastrowid
 
-    # Create exam
-    cursor.execute(
-        'INSERT INTO Exam (ClassID, LocationID, SchedulesID, ExamName) VALUES (%s, %s, %s, %s)',
-        (class_id, location_id, schedule_id, exam_name)
-    )
-    exam_id = cursor.lastrowid
+        cursor.execute(
+            'SELECT ExamID FROM Exam WHERE ClassID=%s AND LocationID=%s AND SchedulesID=%s AND ExamName=%s',
+            (class_id, location_id, schedule_id, exam_name)
+        )
+        duplicate = cursor.fetchone()
+        if duplicate:
+            exam_id = duplicate[0]
+        else:
+            cursor.execute(
+                'INSERT INTO Exam (ClassID, LocationID, SchedulesID, ExamName) VALUES (%s, %s, %s, %s)',
+                (class_id, location_id, schedule_id, exam_name)
+            )
+            exam_id = cursor.lastrowid
+    else:
+        # New exam, create schedule and exam as before
+        # Get or create schedule
+        cursor.execute(
+            'SELECT SchedulesID FROM Schedules WHERE exam_date=%s AND exam_time=%s',
+            (exam_date, exam_time)
+        )
+        row = cursor.fetchone()
+        schedule_id = row[0] if row else None
+        if schedule_id is None:
+            cursor.execute(
+                'INSERT INTO Schedules (exam_date, exam_time) VALUES (%s, %s)',
+                (exam_date, exam_time)
+            )
+            schedule_id = cursor.lastrowid
+
+        cursor.execute(
+            'SELECT ExamID FROM Exam WHERE ClassID=%s AND LocationID=%s AND SchedulesID=%s AND ExamName=%s',
+            (class_id, location_id, schedule_id, exam_name)
+        )
+        duplicate = cursor.fetchone()
+        if duplicate:
+            exam_id = duplicate[0]
+        else:
+            cursor.execute(
+                'INSERT INTO Exam (ClassID, LocationID, SchedulesID, ExamName) VALUES (%s, %s, %s, %s)',
+                (class_id, location_id, schedule_id, exam_name)
+            )
+            exam_id = cursor.lastrowid
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -155,19 +228,33 @@ def add_exam():
 
 @app.route('/api/faculty/exams/<int:exam_id>/students', methods=['GET'])
 def get_exam_students(exam_id):
-    """Return all students (id + email) enrolled in the given exam."""
+    """Return all students (id + email) enrolled in the given exam group."""
     conn = get_db()
     if not conn:
         return jsonify({'success': False, 'message': 'Database connection failed'}), 500
 
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
-        SELECT u.id AS user_id, u.username AS email
+        SELECT ClassID, ExamName, LocationID
+        FROM Exam
+        WHERE ExamID = %s
+    """, (exam_id,))
+    root_exam = cursor.fetchone()
+    if not root_exam:
+        cursor.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Exam not found'}), 404
+
+    cursor.execute("""
+        SELECT DISTINCT u.id AS user_id, u.username AS email
         FROM Registrations r
         JOIN user u ON r.UserID = u.id
-        WHERE r.ExamID = %s
+        JOIN Exam e ON r.ExamID = e.ExamID
+        WHERE e.ClassID = %s
+          AND e.ExamName = %s
+          AND e.LocationID = %s
         ORDER BY u.username
-    """, (exam_id,))
+    """, (root_exam['ClassID'], root_exam['ExamName'], root_exam['LocationID']))
     students = cursor.fetchall()
     cursor.close()
     conn.close()

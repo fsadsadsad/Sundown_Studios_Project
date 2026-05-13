@@ -316,10 +316,14 @@
               if (data.exams.length === 0) {
                 examSelect.innerHTML = '<option value="">No exams available</option>';
               } else {
+                const seenExamNames = new Set();
                 data.exams.forEach(exam => {
+                  const name = String(exam.ExamName || '').trim();
+                  if (!name || seenExamNames.has(name)) return;
+                  seenExamNames.add(name);
                   const option = document.createElement('option');
                   option.value = exam.ExamID;
-                  option.textContent = exam.ExamName;
+                  option.textContent = name;
                   examSelect.appendChild(option);
                 });
                 examSelect.disabled = false;
@@ -355,13 +359,15 @@
               if (data.campuses.length === 0) {
                 locationSelect.innerHTML = '<option value="">No campuses available</option>';
               } else {
+                const seenCampuses = new Set();
                 data.campuses.forEach(campus => {
+                  const campusName = String(campus.Campus || '').trim();
+                  if (!campusName || seenCampuses.has(campusName)) return;
+                  seenCampuses.add(campusName);
                   const option = document.createElement('option');
-                  option.value = campus.LocationID;
-                  option.textContent = campus.Campus;
-                  option.dataset.campus   = campus.Campus;
-                  option.dataset.building = campus.Building || '';
-                  option.dataset.room     = campus.Room     || '';
+                  option.value = campusName;
+                  option.textContent = campusName;
+                  option.dataset.campus = campusName;
                   locationSelect.appendChild(option);
                 });
                 locationSelect.disabled = false;
@@ -390,17 +396,15 @@
           return;
         }
 
-        fetchJson(`http://localhost:5000/api/dates?class_id=${classId}&exam_id=${examId}&location_id=${locationId}`)
+        fetchJson(`http://localhost:5000/api/dates?class_id=${classId}&exam_id=${examId}&campus=${encodeURIComponent(locationId)}`)
           .then(data => {
             if (data.success && data.dates) {
               dateSelect.innerHTML = '<option value="">Select a Date</option>';
               if (data.dates.length === 0) {
                 dateSelect.innerHTML = '<option value="">No dates available</option>';
               } else {
+                const seenDates = new Set();
                 data.dates.forEach(item => {
-                  const option = document.createElement('option');
-                  option.value = item.SchedulesID;
-                  option.dataset.date = item.exam_date;
                   const rawDate = String(item.exam_date || '');
                   let dateText = rawDate;
                   const isoMatch = rawDate.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -412,6 +416,11 @@
                       dateText = parsedDate.toISOString().slice(0, 10);
                     }
                   }
+                  if (seenDates.has(dateText)) return;
+                  seenDates.add(dateText);
+                  const option = document.createElement('option');
+                  option.value = item.SchedulesID;
+                  option.dataset.date = item.exam_date;
                   option.textContent = dateText;
                   dateSelect.appendChild(option);
                 });
@@ -441,7 +450,7 @@
           return;
         }
 
-        fetchJson(`http://localhost:5000/api/times?class_id=${classId}&exam_id=${examId}&location_id=${locationId}&schedule_id=${scheduleId}`)
+        fetchJson(`http://localhost:5000/api/times?class_id=${classId}&exam_id=${examId}&campus=${encodeURIComponent(locationId)}&schedule_id=${scheduleId}`)
           .then(data => {
             if (data.success && data.times) {
               timeSelect.innerHTML = '<option value="">Select a Time</option>';

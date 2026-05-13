@@ -269,20 +269,22 @@ def route_get_campuses():
 
 @app.route('/api/dates', methods=['GET'])
 def route_get_dates():
-    """Route handler for fetching dates by class, exam, and location"""
+    """Route handler for fetching dates by class, exam, and campus or location"""
     class_id = request.args.get('class_id')
     exam_id = request.args.get('exam_id')
+    campus = request.args.get('campus')
     location_id = request.args.get('location_id')
-    return regiback.get_dates_by_campus(class_id, exam_id, location_id, get_db_connection)
+    return regiback.get_dates_by_campus(class_id, exam_id, campus or location_id, get_db_connection)
 
 @app.route('/api/times', methods=['GET'])
 def route_get_times():
-    """Route handler for fetching times by class, exam, location, and date"""
+    """Route handler for fetching times by class, exam, campus/location, and date"""
     class_id = request.args.get('class_id')
     exam_id = request.args.get('exam_id')
+    campus = request.args.get('campus')
     location_id = request.args.get('location_id')
     schedule_id = request.args.get('schedule_id')
-    return regiback.get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connection)
+    return regiback.get_times_by_date(class_id, exam_id, campus or location_id, schedule_id, get_db_connection)
 
 @app.route('/regipage.html')
 def regipage():

@@ -268,6 +268,15 @@ def _get_or_create_exam(cursor, class_id, location_id, schedule_id, exam_name):
     return cursor.lastrowid
 
 
+def _get_exam_group(cursor, exam_id):
+    """Return the exam identity grouping values for a given ExamID."""
+    cursor.execute(
+        "SELECT ClassID, ExamName, LocationID FROM Exam WHERE ExamID = %s",
+        (exam_id,)
+    )
+    return cursor.fetchone()
+
+
 def _user_has_time_conflict(cursor, user_id, new_date, new_time_str):
     """
     Return True if the user already has an exam on new_date whose time is
@@ -412,6 +421,28 @@ def schedule_exam():
             cursor.close(); conn.close()
             return jsonify({'success': False,
                             'message': 'You are already registered for this exact exam.'}), 409
+
+        # ── Rule 1.5: no more than 3 exams total per user ─────────────────────
+        cursor.execute(
+            "SELECT COUNT(*) FROM Registrations WHERE UserID=%s",
+            (user_id,)
+        )
+        existing_exam_count = cursor.fetchone()[0]
+        if existing_exam_count >= 3:
+            cursor.close(); conn.close()
+            return jsonify({'success': False,
+                            'message': 'You may not register for more than three exams.'}), 409
+
+        # ── Rule 1.75: exam session capacity check ────────────────────────────
+        cursor.execute(
+            "SELECT COUNT(*) FROM Registrations WHERE ExamID=%s",
+            (exam_id,)
+        )
+        exam_reg_count = cursor.fetchone()[0]
+        if exam_reg_count >= 20:
+            cursor.close(); conn.close()
+            return jsonify({'success': False,
+                            'message': 'This exam session is full and cannot accept more registrations.'}), 409
 
         # ── Rule 2: 1-hour buffer check ───────────────────────────────────────
         conflict, conflict_time = _user_has_time_conflict(
@@ -613,7 +644,7 @@ def get_classes(get_db_connection):
 
 def get_exams_by_class(class_id, get_db_connection):
     """
-    Fetch all exams for a specific class ID from the database
+    Fetch all distinct exam names for a specific class ID from the database.
     Returns JSON: {"success": true, "exams": [{"ExamID": 1, "ExamName": "Midterm"}, ...]}
     """
     try:
@@ -626,8 +657,13 @@ def get_exams_by_class(class_id, get_db_connection):
         
         cursor = connection.cursor(dictionary=True)
         
-        # Query all exams for the given ClassID
-        query = "SELECT ExamID, ExamName FROM Exam WHERE ClassID = %s ORDER BY ExamName ASC"
+        query = """
+            SELECT MIN(e.ExamID) AS ExamID, TRIM(e.ExamName) AS ExamName
+            FROM Exam e
+            WHERE e.ClassID = %s
+            GROUP BY TRIM(e.ExamName)
+            ORDER BY TRIM(e.ExamName) ASC
+        """
         cursor.execute(query, (class_id,))
         exams = cursor.fetchall()
         
@@ -646,8 +682,8 @@ def get_exams_by_class(class_id, get_db_connection):
 
 def get_campuses_by_exam(class_id, exam_id, get_db_connection):
     """
-    Fetch all unique campuses for a specific class and exam
-    Returns JSON: {"success": true, "campuses": [{"LocationID": 1, "Campus": "Henderson"}, ...]}
+    Fetch all unique campuses for a specific class and exam group
+    Returns JSON: {"success": true, "campuses": [{"Campus": "Henderson"}, ...]}
     """
     try:
         if not class_id or not exam_id:
@@ -658,16 +694,24 @@ def get_campuses_by_exam(class_id, exam_id, get_db_connection):
             return jsonify({'success': False, 'message': 'Database connection failed'}), 500
         
         cursor = connection.cursor(dictionary=True)
-        
-        # Query distinct campuses for the given ClassID and ExamID
+        root_exam = _get_exam_group(cursor, exam_id)
+        if not root_exam:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'message': 'Exam not found'}), 404
+
         query = """
-            SELECT DISTINCT l.LocationID, l.Campus 
+            SELECT DISTINCT TRIM(l.Campus) AS Campus
             FROM Location l
             INNER JOIN Exam e ON l.LocationID = e.LocationID
-            WHERE e.ClassID = %s AND e.ExamID = %s
-            ORDER BY l.Campus ASC
+            LEFT JOIN Registrations r ON e.ExamID = r.ExamID
+            WHERE e.ClassID = %s
+              AND e.ExamName = %s
+            GROUP BY TRIM(l.Campus), e.SchedulesID
+            HAVING COUNT(r.RegistrationsID) < 20
+            ORDER BY TRIM(l.Campus) ASC
         """
-        cursor.execute(query, (class_id, exam_id))
+        cursor.execute(query, (root_exam['ClassID'], root_exam['ExamName']))
         campuses = cursor.fetchall()
         
         cursor.close()
@@ -683,30 +727,72 @@ def get_campuses_by_exam(class_id, exam_id, get_db_connection):
         return jsonify({'success': False, 'message': 'An error occurred while fetching campuses'}), 500
 
 
-def get_dates_by_campus(class_id, exam_id, location_id, get_db_connection):
+def get_dates_by_campus(class_id, exam_id, location_id_or_campus, get_db_connection):
     """
-    Fetch all unique dates for a specific class, exam, and campus
+    Fetch all unique dates for a specific class, exam group, and campus
     Returns JSON: {"success": true, "dates": [{"SchedulesID": 1, "exam_date": "2026-05-10"}, ...]}
     """
     try:
-        if not class_id or not exam_id or not location_id:
-            return jsonify({'success': False, 'message': 'Class ID, Exam ID, and Location ID are required'}), 400
+        if not class_id or not exam_id or not location_id_or_campus:
+            return jsonify({'success': False, 'message': 'Class ID, Exam ID, and Campus or Location ID are required'}), 400
         
         connection = get_db_connection()
         if not connection:
             return jsonify({'success': False, 'message': 'Database connection failed'}), 500
         
         cursor = connection.cursor(dictionary=True)
-        
-        # Query distinct dates for the given ClassID, ExamID, and LocationID
-        query = """
-            SELECT DISTINCT s.SchedulesID, s.exam_date 
-            FROM Schedules s
-            INNER JOIN Exam e ON s.SchedulesID = e.SchedulesID
-            WHERE e.ClassID = %s AND e.ExamID = %s AND e.LocationID = %s
-            ORDER BY s.exam_date ASC
-        """
-        cursor.execute(query, (class_id, exam_id, location_id))
+        root_exam = _get_exam_group(cursor, exam_id)
+        if not root_exam:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'message': 'Exam not found'}), 404
+
+        campus_name = None
+        location_id = None
+        arg_value = str(location_id_or_campus).strip()
+        if arg_value.isdigit():
+            location_id = arg_value
+        else:
+            campus_name = arg_value
+
+        if campus_name:
+            query = """
+                SELECT MIN(s.SchedulesID) AS SchedulesID, s.exam_date
+                FROM Schedules s
+                JOIN (
+                    SELECT e.SchedulesID
+                    FROM Exam e
+                    JOIN Location l ON e.LocationID = l.LocationID
+                    LEFT JOIN Registrations r ON e.ExamID = r.ExamID
+                    WHERE e.ClassID = %s
+                      AND e.ExamName = %s
+                      AND TRIM(l.Campus) = %s
+                    GROUP BY e.SchedulesID
+                    HAVING COUNT(r.RegistrationsID) < 20
+                ) avail ON s.SchedulesID = avail.SchedulesID
+                GROUP BY s.exam_date
+                ORDER BY s.exam_date ASC
+            """
+            cursor.execute(query, (root_exam['ClassID'], root_exam['ExamName'], campus_name))
+        else:
+            query = """
+                SELECT MIN(s.SchedulesID) AS SchedulesID, s.exam_date
+                FROM Schedules s
+                JOIN (
+                    SELECT e.SchedulesID
+                    FROM Exam e
+                    LEFT JOIN Registrations r ON e.ExamID = r.ExamID
+                    WHERE e.ClassID = %s
+                      AND e.ExamName = %s
+                      AND e.LocationID = %s
+                    GROUP BY e.SchedulesID
+                    HAVING COUNT(r.RegistrationsID) < 20
+                ) avail ON s.SchedulesID = avail.SchedulesID
+                GROUP BY s.exam_date
+                ORDER BY s.exam_date ASC
+            """
+            cursor.execute(query, (root_exam['ClassID'], root_exam['ExamName'], location_id))
+
         dates = cursor.fetchall()
         
         cursor.close()
@@ -722,15 +808,15 @@ def get_dates_by_campus(class_id, exam_id, location_id, get_db_connection):
         return jsonify({'success': False, 'message': 'An error occurred while fetching dates'}), 500
 
 
-def get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connection):
+def get_times_by_date(class_id, exam_id, location_id_or_campus, schedule_id, get_db_connection):
     """
-    Fetch all times for a specific class, exam, campus, and date
+    Fetch all times for a specific class, exam group, campus, and date
     Returns JSON: {"success": true, "times": [{"SchedulesID": 1, "exam_time": "08:00:00"}, ...]}
     """
     try:
-        print(f"get_times_by_date called with: class_id={class_id}, exam_id={exam_id}, location_id={location_id}, schedule_id={schedule_id}")
+        print(f"get_times_by_date called with: class_id={class_id}, exam_id={exam_id}, location_id_or_campus={location_id_or_campus}, schedule_id={schedule_id}")
         
-        if not class_id or not exam_id or not location_id or not schedule_id:
+        if not class_id or not exam_id or not location_id_or_campus or not schedule_id:
             print("Missing required parameters")
             return jsonify({'success': False, 'message': 'All parameters are required'}), 400
         
@@ -741,6 +827,12 @@ def get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connec
         
         cursor = connection.cursor(dictionary=True)
         
+        root_exam = _get_exam_group(cursor, exam_id)
+        if not root_exam:
+            cursor.close()
+            connection.close()
+            return jsonify({'success': False, 'message': 'Exam not found'}), 404
+
         # First get the selected date
         print(f"Getting date for schedule_id: {schedule_id}")
         cursor.execute("SELECT exam_date FROM Schedules WHERE SchedulesID = %s", (schedule_id,))
@@ -753,20 +845,54 @@ def get_times_by_date(class_id, exam_id, location_id, schedule_id, get_db_connec
         
         selected_date = date_result['exam_date']
         print(f"Selected date: {selected_date}")
-        
-        # Query all schedules with the same date that have exams matching the criteria
-        query = """
-            SELECT DISTINCT s.SchedulesID, s.exam_time 
-            FROM Schedules s
-            INNER JOIN Exam e ON s.SchedulesID = e.SchedulesID
-            WHERE s.exam_date = %s 
-            AND e.ClassID = %s 
-            AND e.ExamID = %s 
-            AND e.LocationID = %s
-            ORDER BY s.exam_time ASC
-        """
-        print(f"Executing query with params: {selected_date}, {class_id}, {exam_id}, {location_id}")
-        cursor.execute(query, (selected_date, class_id, exam_id, location_id))
+
+        arg_value = str(location_id_or_campus).strip()
+        campus_name = None
+        location_id = None
+        if arg_value.isdigit():
+            location_id = arg_value
+        else:
+            campus_name = arg_value
+
+        if campus_name:
+            query = """
+                SELECT DISTINCT s.SchedulesID, s.exam_time
+                FROM Schedules s
+                JOIN (
+                    SELECT e.SchedulesID
+                    FROM Exam e
+                    JOIN Location l ON e.LocationID = l.LocationID
+                    LEFT JOIN Registrations r ON e.ExamID = r.ExamID
+                    WHERE e.ClassID = %s
+                      AND e.ExamName = %s
+                      AND TRIM(l.Campus) = %s
+                    GROUP BY e.SchedulesID
+                    HAVING COUNT(r.RegistrationsID) < 20
+                ) avail ON s.SchedulesID = avail.SchedulesID
+                WHERE s.exam_date = %s
+                ORDER BY s.exam_time ASC
+            """
+            print(f"Executing campus query with params: {selected_date}, {root_exam['ClassID']}, {root_exam['ExamName']}, {campus_name}")
+            cursor.execute(query, (root_exam['ClassID'], root_exam['ExamName'], campus_name, selected_date))
+        else:
+            query = """
+                SELECT DISTINCT s.SchedulesID, s.exam_time
+                FROM Schedules s
+                JOIN (
+                    SELECT e.SchedulesID
+                    FROM Exam e
+                    LEFT JOIN Registrations r ON e.ExamID = r.ExamID
+                    WHERE e.ClassID = %s
+                      AND e.ExamName = %s
+                      AND e.LocationID = %s
+                    GROUP BY e.SchedulesID
+                    HAVING COUNT(r.RegistrationsID) < 20
+                ) avail ON s.SchedulesID = avail.SchedulesID
+                WHERE s.exam_date = %s
+                ORDER BY s.exam_time ASC
+            """
+            print(f"Executing location query with params: {selected_date}, {root_exam['ClassID']}, {root_exam['ExamName']}, {location_id}")
+            cursor.execute(query, (root_exam['ClassID'], root_exam['ExamName'], location_id, selected_date))
         times = cursor.fetchall()
         print(f"Times found: {times}")
 

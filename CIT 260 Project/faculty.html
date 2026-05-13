@@ -176,8 +176,6 @@
       noMsg.classList.add('hidden');
 
       exams.forEach(ex => {
-        const timeStr = formatTime(ex.time);
-        const dateStr = formatDate(ex.date);
         const locParts = [
           ex.location || '',
           ex.building ? `Bldg ${ex.building}` : '',
@@ -186,13 +184,20 @@
         const locStr = locParts.join(' · ');
         const count  = ex.enrollment ?? 0;
 
+        const scheduleLines = (ex.schedules || []).map(slot => {
+          const dateStr = formatDate(slot.date);
+          const timeStr = formatTime(slot.time);
+          return `<span class="exam-detail">${escHtml(dateStr)} at ${escHtml(timeStr)}</span>`;
+        }).join('');
+
         const entry = document.createElement('div');
         entry.className = 'exam-entry';
         entry.dataset.examId = ex.ExamID;
         entry.innerHTML = `
           <div class="exam-info">
             <span class="exam-name">${escHtml(ex.ExamName || ex.subject)}</span>
-            <span class="exam-detail">${escHtml(ex.subject)} &nbsp;|&nbsp; ${escHtml(dateStr)} at ${escHtml(timeStr)}</span>
+            <span class="exam-detail">${escHtml(ex.subject)}</span>
+            ${scheduleLines}
             ${locStr ? `<span class="exam-detail">${escHtml(locStr)}</span>` : ''}
             <span class="exam-detail exam-enrollment">${count} student${count !== 1 ? 's' : ''} enrolled</span>
           </div>
