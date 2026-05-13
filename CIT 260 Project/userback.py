@@ -154,13 +154,15 @@ def login():
                 valid = False
 
         if valid:
-            session['username'] = username
+            redirect_url = 'regipage.html'
+            if user['username'].endswith('@csn.edu'):
+                redirect_url = 'faculty.html'
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
                 'user_id': user['id'],
                 'username': user['username'],
-                'redirect': 'regipage.html'
+                'redirect': redirect_url
             }), 200
         else:
             return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
