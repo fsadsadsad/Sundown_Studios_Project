@@ -126,6 +126,17 @@ main {
 #exam-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 #exam-scroll::-webkit-scrollbar-thumb:hover { background: var(--csn-accent); }
 
+/* ---------- New-entry flash animation ---------- */
+@keyframes exam-flash {
+  0%   { background: rgba(0, 61, 165, 0.14); border-color: var(--csn-blue); box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.15); }
+  70%  { background: rgba(0, 61, 165, 0.06); border-color: var(--csn-blue-light); box-shadow: none; }
+  100% { background: var(--off-white);        border-color: var(--border-color);  box-shadow: none; }
+}
+
+.exam-entry-flash {
+  animation: exam-flash 1.8s ease-out forwards;
+}
+
 /* ---------- Empty state message ---------- */
 .empty-msg {
   font-size: 0.88rem;
