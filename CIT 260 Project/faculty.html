@@ -38,10 +38,16 @@
 
       <h2 id="form-heading">Add Exam to List</h2>
 
+      <!-- Exam Name -->
+      <div class="form-group">
+        <label for="exam-name">Exam Name</label>
+        <input type="text" id="exam-name" name="exam_name" placeholder="e.g. Midterm Exam" />
+      </div>
+
       <!-- Subject dropdown (populated from DB) -->
       <div class="form-group">
         <label for="subject-select">Subject</label>
-        <select id="subject-select" onchange="onSubjectChange(this.value)">
+        <select id="subject-select">
           <option value="" disabled selected>— Select a subject —</option>
         </select>
       </div>
@@ -58,24 +64,26 @@
         </div>
       </div>
 
-      <!-- Location (auto-populated, readonly) -->
+      <!-- Location dropdown -->
       <div class="form-group">
         <label for="exam-location">Location</label>
-        <input type="text" id="exam-location" name="location"
-               placeholder="Select a subject above" readonly />
+        <select id="exam-location" name="location">
+          <option value="" disabled selected>— Select a location —</option>
+          <option value="West Charleston">West Charleston</option>
+          <option value="North Las Vegas">North Las Vegas</option>
+          <option value="Henderson">Henderson</option>
+        </select>
       </div>
 
-      <!-- Building and room (auto-populated, readonly) -->
+      <!-- Building and room -->
       <div class="form-row">
         <div class="form-group">
           <label for="exam-building">Building</label>
-          <input type="text" id="exam-building" name="building"
-                 placeholder="Auto-populated" readonly />
+          <input type="text" id="exam-building" name="building" placeholder="e.g. Building A" />
         </div>
         <div class="form-group">
           <label for="exam-room">Room Number</label>
-          <input type="text" id="exam-room" name="room"
-                 placeholder="Auto-populated" readonly />
+          <input type="text" id="exam-room" name="room" placeholder="e.g. 101" />
         </div>
       </div>
 
@@ -183,8 +191,8 @@
         entry.dataset.examId = ex.ExamID;
         entry.innerHTML = `
           <div class="exam-info">
-            <span class="exam-name">${escHtml(ex.subject)} Exam</span>
-            <span class="exam-detail">${escHtml(dateStr)} at ${escHtml(timeStr)}</span>
+            <span class="exam-name">${escHtml(ex.ExamName || ex.subject)}</span>
+            <span class="exam-detail">${escHtml(ex.subject)} &nbsp;|&nbsp; ${escHtml(dateStr)} at ${escHtml(timeStr)}</span>
             ${locStr ? `<span class="exam-detail">${escHtml(locStr)}</span>` : ''}
             <span class="exam-detail exam-enrollment">${count} student${count !== 1 ? 's' : ''} enrolled</span>
           </div>
@@ -221,32 +229,24 @@
       }
     }
 
-    async function onSubjectChange(classId) {
-      if (!classId) return;
-      try {
-        const res  = await fetch(`${API_BASE}/api/faculty/subjects/${classId}/location`);
-        const data = await res.json();
-        const loc  = data.success && data.location ? data.location : null;
-        document.getElementById('exam-location').value = loc ? (loc.location || '') : '';
-        document.getElementById('exam-building').value = loc ? (loc.building || '') : '';
-        document.getElementById('exam-room').value     = loc ? (loc.room     || '') : '';
-      } catch (e) {
-        console.error('Could not load location for subject:', e);
-      }
-    }
-
     async function submitAddExam() {
+      const examName   = document.getElementById('exam-name').value.trim();
       const sel        = document.getElementById('subject-select');
       const classId    = sel.value;
       const subjectName = sel.options[sel.selectedIndex]?.dataset.name || sel.options[sel.selectedIndex]?.text || '';
       const time       = document.getElementById('exam-time').value;
       const date       = document.getElementById('exam-date').value;
-      const location   = document.getElementById('exam-location').value.trim();
+      const locSel     = document.getElementById('exam-location');
+      const location   = locSel.value;
       const building   = document.getElementById('exam-building').value.trim();
       const room       = document.getElementById('exam-room').value.trim();
 
-      if (!classId || !time || !date) {
-        alert('Please select a subject and fill in the time and date.');
+      if (!examName) {
+        alert('Please enter an exam name.');
+        return;
+      }
+      if (!classId || !time || !date || !location) {
+        alert('Please fill in the subject, time, date, and location.');
         return;
       }
 
@@ -254,14 +254,15 @@
         const res  = await fetch(`${API_BASE}/api/faculty/exams`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ subject: subjectName, date, time, location, building, room })
+          body:    JSON.stringify({ exam_name: examName, subject: subjectName, date, time, location, building, room })
         });
         const data = await res.json();
         if (data.success) {
+          document.getElementById('exam-name').value     = '';
           sel.selectedIndex = 0;
           document.getElementById('exam-time').value     = '';
           document.getElementById('exam-date').value     = '';
-          document.getElementById('exam-location').value = '';
+          locSel.selectedIndex = 0;
           document.getElementById('exam-building').value = '';
           document.getElementById('exam-room').value     = '';
           await loadExams();
