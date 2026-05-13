@@ -84,17 +84,18 @@ def get_exams():
 @app.route('/api/faculty/exams', methods=['POST'])
 def add_exam():
     """Create a new exam entry (and its supporting class/location/schedule rows)."""
-    data     = request.get_json() or {}
-    subject  = data.get('subject', '').strip()
+    data      = request.get_json() or {}
+    exam_name = data.get('exam_name', '').strip()
+    subject   = data.get('subject', '').strip()
     exam_date = data.get('date', '').strip()
     exam_time = data.get('time', '').strip()
-    location = data.get('location', '').strip()
-    building = data.get('building', '').strip()
-    room     = data.get('room', '').strip()
+    location  = data.get('location', '').strip()
+    building  = data.get('building', '').strip()
+    room      = data.get('room', '').strip()
 
-    if not subject or not exam_date or not exam_time:
+    if not exam_name or not subject or not exam_date or not exam_time or not location:
         return jsonify({'success': False,
-                        'message': 'Subject, date, and time are required'}), 400
+                        'message': 'Exam name, subject, date, time, and location are required'}), 400
 
     conn = get_db()
     if not conn:
@@ -139,7 +140,6 @@ def add_exam():
         schedule_id = cursor.lastrowid
 
     # Create exam
-    exam_name = f'{subject} Exam'
     cursor.execute(
         'INSERT INTO Exam (ClassID, LocationID, SchedulesID, ExamName) VALUES (%s, %s, %s, %s)',
         (class_id, location_id, schedule_id, exam_name)
