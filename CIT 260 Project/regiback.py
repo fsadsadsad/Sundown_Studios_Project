@@ -49,6 +49,28 @@ def _format_date(date_str):
         return str(date_str)
 
 
+def _normalize_time_string(time_value):
+    if time_value is None:
+        return None
+    if isinstance(time_value, timedelta):
+        total = int(time_value.total_seconds())
+        hours, remainder = divmod(total, 3600)
+        minutes = remainder // 60
+        return f"{hours:02d}:{minutes:02d}"
+
+    raw = str(time_value).strip()
+    if not raw:
+        return None
+
+    parts = raw.split(':')
+    if len(parts) >= 2:
+        hour = parts[0].zfill(2)
+        minute = parts[1].zfill(2)
+        return f"{hour}:{minute}"
+
+    return raw
+
+
 def _normalize_student_email(student_email):
     email = (student_email or '').strip()
     if not email:
@@ -261,16 +283,13 @@ def _user_has_time_conflict(cursor, user_id, new_date, new_time_str):
     )
     existing = cursor.fetchall()
 
-    # new_time_str is "HH:MM" or "HH:MM:SS"
-    new_dt = datetime.strptime(new_time_str[:5], "%H:%M")
+    # new_time_str is expected as "HH:MM" or "HH:MM:SS"
+    normalized_new_time = _normalize_time_string(new_time_str)
+    new_dt = datetime.strptime(normalized_new_time, "%H:%M")
 
     for _, existing_time in existing:
-        # existing_time may be a timedelta (mysql connector) or time object
-        if isinstance(existing_time, timedelta):
-            total_seconds = int(existing_time.total_seconds())
-            existing_dt = datetime(1900, 1, 1) + timedelta(seconds=total_seconds)
-        else:
-            existing_dt = datetime.strptime(str(existing_time)[:5], "%H:%M")
+        existing_time_str = _normalize_time_string(existing_time)
+        existing_dt = datetime.strptime(existing_time_str, "%H:%M")
 
         diff = abs((new_dt - existing_dt).total_seconds()) / 60
         if diff < 60:
@@ -348,7 +367,7 @@ def schedule_exam():
                 return jsonify({'success': False, 'message': 'Exam not found.'}), 404
 
             exam_date = str(exam_row[5])
-            exam_time = str(exam_row[6])[:5]  # HH:MM
+            exam_time = _normalize_time_string(exam_row[6]) or ''
             subject = exam_row[1]
             location = exam_row[2]
             building = exam_row[3]
