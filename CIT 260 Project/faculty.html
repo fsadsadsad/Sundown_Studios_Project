@@ -265,6 +265,13 @@
           document.getElementById('exam-building').value = '';
           document.getElementById('exam-room').value     = '';
           await loadExams();
+          // Scroll to and flash the newly added entry
+          const newEntry = document.querySelector(`.exam-entry[data-exam-id="${data.exam_id}"]`);
+          if (newEntry) {
+            newEntry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            newEntry.classList.add('exam-entry-flash');
+            setTimeout(() => newEntry.classList.remove('exam-entry-flash'), 1800);
+          }
         } else {
           alert('Error: ' + data.message);
         }
